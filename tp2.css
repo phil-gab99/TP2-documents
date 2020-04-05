@@ -1,0 +1,20 @@
+@charset "UTF-8";
+
+table {
+    float: left;
+}
+
+td {
+    table-layout: fixed;
+    width: 70px;
+    height: 98px;
+    text-align: center;
+    vertical-align: center;
+    font-family: Helvetica;
+    font-size: 24px;
+}
+
+img {
+    vertical-align: middle;
+    width: 100%;
+}
