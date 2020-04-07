@@ -55,10 +55,11 @@ var cardFromId = function(id){
 var buildGameboard = function(){
     var gbStr = "";
 
+
     for (var i = 0; i < 5; i++) {
         gbStr += '<tr>';
         for (var j = 0; j < 5; j++) {
-            gbStr += '<td><img src="cards/empty.svg"></td>';
+            gbStr += '<td id="'+i+j+'"><img src="cards/empty.svg" onclick="clic('+i+j+')"></td>';
         }
         gbStr += '<td></td>';
         gbStr += '</tr>';
@@ -111,22 +112,23 @@ var init = function () {
 
 };
 
-var clic = function(card){
+var clic = function(cellId){
 
-    if(card == backCardCode){
 
-        var newCard = deck[currentCard];
+    if(cellId == backCardCode){
 
-        //document.getElementById(card).onclick = "clic("+newCard+")";
+        var card = deck[currentCard];
 
-        document.getElementById(card).innerHTML = '<img src="cards/'+ cardFromId(newCard) +'.svg">';
+        document.getElementById(cellId).innerHTML = '<img src="cards/'+ cardFromId(card) +'.svg">';
 
-        document.getElementById(card).style.backgroundColor = "lime";
+        document.getElementById(cellId).style.backgroundColor = "lime";
 
-        //document.getElementById(card).id = newCard;
-
-        currentCard++;
+        //currentCard++;
     }
+    else{
 
-    //<td id="25" onclick="clic(25);" style="background-color: lime;">\
+        var card = deck[currentCard];
+
+        document.getElementById(cellId).innerHTML = '<img src="cards/'+ cardFromId(card) +'.svg">';
+    }
 };
