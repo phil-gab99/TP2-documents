@@ -65,7 +65,7 @@ var buildGameboard = function(){
     for (var i = 0; i < 5; i++) {
         gbStr += '<tr>';
         for (var j = 0; j < 5; j++) {
-            var id = ("" + (i+1)) + (j+1)+"00";
+            var id = ("" + (i+1)) + (j+1)+"99";
             gbStr += '<td id="'+id+'" onclick="clic('+id+');"><img src="cards/empty.svg"></td>';
         }
         gbStr += '<td></td>';
@@ -155,8 +155,6 @@ var cellNumFromCellId = function(cellId){
 
 //Manages the click of a card or card cell
 var clic = function(cellId){
-    console.log(cellId);
-
     var cell = document.getElementById(cellId);
     var cardId = cardIdFromCellId(cellId);
     var cellNum = cellNumFromCellId(cellId);
@@ -182,13 +180,11 @@ var clic = function(cellId){
     else if(cellNum != backCardCode && selectedCard != null){
         cell.innerHTML = '<img src="cards/'+ cardFromId(selectedCard) +'.svg">';
 
-        cell.id = cellNum + cardFromId(selectedCard);
-        cell = document.getElementById(cell.id);
+        cell.id = cellNum + selectedCard;
         cell.onclick = function(){clic(cell.id);};
-        console.log(cell.onclick);
 
-        //If the selected card is from the deck cell
-        if(cellNumFromCellId(selectedCell.id) == backCardCode){
+        //If the selected card is from the deck cell and current cell is empty
+        if(cellNumFromCellId(selectedCell.id) == backCardCode && cardId == "99"){
             selectedCell.innerHTML = '<img src="cards/back.svg">';
             currentCard++;
             deckReady = false;
@@ -197,13 +193,29 @@ var clic = function(cellId){
                 endGame();
             }
         }
+        //If the selected card is from the deck cell and current cell is not empty
+        else if(cellNumFromCellId(selectedCell.id)){
+            //selectCell(cell, cardId);
+        }
         //Otherwise exchange the current's cell card with the selected cell
         else{
-            selectedCell.innerHTML = '<img src="cards/'+cardFromId(cardId)+'.svg">';
-            //TODO: onclick listener : cell.onclick = "clic(" + cell.id + ");";
-        }
+            var cpy = document.getElementById(selectedCell.id);
+            if(cardId == "99"){
+                cpy.innerHTML = '<img src="cards/empty.svg">';
+                cpy.id = cellNumFromCellId(selectedCell.id) + "99";
+            }
+            else{
+                cpy.innerHTML = '<img src="cards/'+cardFromId(cardId)+'.svg">';
+                cpy.id = cellNumFromCellId(selectedCell.id) + "" + cardId;
+            }
 
+            cpy.onclick = function(){clic(cpy.id);};
+
+            cell.innerHTML = '<img src="cards/'+cardFromId(selectedCard)+'.svg">';
+        }
         unselectCell();
+
+
     }
     else if(cellNum != backCardCode && selectedCard == null){
         selectCell(cell, cardId);
