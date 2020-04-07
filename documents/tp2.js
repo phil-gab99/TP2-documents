@@ -52,6 +52,27 @@ var cardFromId = function(id){
     
 };
 
+var buildGameboard = function(){
+    var gbStr = "";
+
+    for (var i = 0; i < 5; i++) {
+        gbStr += '<tr>';
+        for (var j = 0; j < 5; j++) {
+            gbStr += '<td><img src="cards/empty.svg"></td>';
+        }
+        gbStr += '<td></td>';
+        gbStr += '</tr>';
+    }
+
+    gbStr += '<tr>';
+    for (var j = 0; j < 5; j++) {
+        gbStr += '<td></td>';
+    }
+    gbStr += '<td id="score">0</td></tr>';
+
+    return gbStr;
+};
+
 var init = function () {
 
     //Create a deck of 52 cards
@@ -76,7 +97,13 @@ var init = function () {
         <div></div>\
         </tbody>\
         </table>\
+        <table>\
+        <tbody id="gameboard">\
+        </tbody>\
+        </table>\
         '
+
+    document.getElementById("gameboard").innerHTML = buildGameboard();
 
     //document.getElementById("0").style.backgroundColor = "lime";
 
@@ -86,6 +113,7 @@ var init = function () {
 var clic = function(card){
 
     if(card == backCardCode){
+
         var newCard = deck[currentCard];
 
         //document.getElementById(card).onclick = "clic("+newCard+")";
