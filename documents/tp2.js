@@ -66,7 +66,7 @@ var buildGameboard = function(){
         gbStr += '<tr>';
         for (var j = 0; j < 5; j++) {
             var id = ("" + (i+1)) + (j+1)+"00";
-            gbStr += '<td id="'+id+'"><img src="cards/empty.svg" onclick="clic('+id+')"></td>';
+            gbStr += '<td id="'+id+'" onclick="clic('+id+');"><img src="cards/empty.svg"></td>';
         }
         gbStr += '<td></td>';
         gbStr += '</tr>';
@@ -138,7 +138,6 @@ var selectCell = function(cell, card){
 
 var unselectCell = function(){
     if(selectedCard != null){
-
         selectedCell.style.backgroundColor = "transparent";
         selectedCard = null;
         selectedCell = null;
@@ -156,6 +155,8 @@ var cellNumFromCellId = function(cellId){
 
 //Manages the click of a card or card cell
 var clic = function(cellId){
+    console.log(cellId);
+
     var cell = document.getElementById(cellId);
     var cardId = cardIdFromCellId(cellId);
     var cellNum = cellNumFromCellId(cellId);
@@ -168,26 +169,23 @@ var clic = function(cellId){
         selectCell(cell, deck[currentCard]);
 
         deckReady = true;
-
-        //console.log(selectedCard);
     }
     //Clicking the deck when it is ready with no card in hand
     else if(cellNum == backCardCode && selectedCard == null && deckReady){
         selectCell(cell, deck[currentCard]);
-
-        //console.log(selectedCard);
     }
     //Clicking the deck with a card in hand
     else if(cellNum == backCardCode && selectedCard != null){
         unselectCell();
-
-        //console.log(selectedCard);
     }
     //Clicking an empty cell with a selected card in hand
     else if(cellNum != backCardCode && selectedCard != null){
         cell.innerHTML = '<img src="cards/'+ cardFromId(selectedCard) +'.svg">';
 
-        cell.id = cellNum + cardFromId(cardId);
+        cell.id = cellNum + cardFromId(selectedCard);
+        cell = document.getElementById(cell.id);
+        cell.onclick = function(){clic(cell.id);};
+        console.log(cell.onclick);
 
         //If the selected card is from the deck cell
         if(cellNumFromCellId(selectedCell.id) == backCardCode){
@@ -202,9 +200,13 @@ var clic = function(cellId){
         //Otherwise exchange the current's cell card with the selected cell
         else{
             selectedCell.innerHTML = '<img src="cards/'+cardFromId(cardId)+'.svg">';
+            //TODO: onclick listener : cell.onclick = "clic(" + cell.id + ");";
         }
 
         unselectCell();
+    }
+    else if(cellNum != backCardCode && selectedCard == null){
+        selectCell(cell, cardId);
     }
     // else{
     //     //console.log(selectedCard + cardId);
