@@ -103,6 +103,7 @@ var init = function () {
         </table>\
         '
 
+    
     document.getElementById("gameboard").innerHTML = buildGameboard();
 
     //document.getElementById("0").style.backgroundColor = "lime";
