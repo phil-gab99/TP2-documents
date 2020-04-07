@@ -1,6 +1,6 @@
 var backCardCode = 53;
 var emptyCardCode = 52;
-var deckLength = 52;
+var deckLength = 5;
 var currentCard = 0;
 var selectedCard = null;
 var deck = [];
@@ -74,11 +74,6 @@ var buildGameboard = function(){
     return gbStr;
 };
 
-var endGame = function(){
-    window.alert("Game Over");
-    init();
-};
-
 var init = function () {
 
     //Create a deck of 52 cards
@@ -115,6 +110,15 @@ var init = function () {
     //document.getElementById("0").style.backgroundColor = "lime";
 
 
+};
+
+
+var endGame = function(){
+    window.alert("Game Over");
+    currentCard = 0;
+    selectedCard = null;
+    deck = [];
+    init();
 };
 
 var clic = function(cellId){
