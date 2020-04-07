@@ -47,7 +47,6 @@ var cardFromId = function(id){
         case 2: type = 'H'; break;
         case 3: type = 'S'; break;
     }
-    console.log(id + ": " + number + type);
 
     return number + type;
     
@@ -73,6 +72,11 @@ var buildGameboard = function(){
     gbStr += '<td id="score">0</td></tr>';
 
     return gbStr;
+};
+
+var endGame = function(){
+    window.alert("Game Over");
+    init();
 };
 
 var init = function () {
@@ -115,8 +119,7 @@ var init = function () {
 
 var clic = function(cellId){
 
-
-    if(cellId == backCardCode){
+    if(cellId == backCardCode && selectedCard == null){
 
         var card = deck[currentCard];
 
@@ -127,8 +130,9 @@ var clic = function(cellId){
         selectedCard = currentCard;
 
         currentCard++;
+
     }
-    else if(selectedCard != null){
+    else if(cellId != backCardCode && selectedCard != null){
 
         var card = deck[selectedCard];
 
@@ -137,6 +141,11 @@ var clic = function(cellId){
         document.getElementById(backCardCode).innerHTML = '<img src="cards/back.svg">';
 
         selectedCard = null;
+
+        if(currentCard >= deckLength){
+            document.getElementById(backCardCode).innerHTML = '<img src="cards/empty.svg">';
+            endGame();
+        }
 
         document.getElementById(backCardCode).style.backgroundColor = "transparent";
     }
