@@ -2,6 +2,7 @@ var backCardCode = 53;
 var emptyCardCode = 52;
 var deckLength = 52;
 var currentCard = 0;
+var selectedCard = null;
 var deck = [];
 
 
@@ -59,7 +60,7 @@ var buildGameboard = function(){
     for (var i = 0; i < 5; i++) {
         gbStr += '<tr>';
         for (var j = 0; j < 5; j++) {
-            gbStr += '<td id="'+i+j+'"><img src="cards/empty.svg" onclick="clic('+i+j+')"></td>';
+            gbStr += '<td id="'+(i+1)+(j+1)+'"><img src="cards/empty.svg" onclick="clic('+(i+1)+(j+1)+')"></td>';
         }
         gbStr += '<td></td>';
         gbStr += '</tr>';
@@ -123,12 +124,20 @@ var clic = function(cellId){
 
         document.getElementById(cellId).style.backgroundColor = "lime";
 
-        //currentCard++;
-    }
-    else{
+        selectedCard = currentCard;
 
-        var card = deck[currentCard];
+        currentCard++;
+    }
+    else if(selectedCard != null){
+
+        var card = deck[selectedCard];
 
         document.getElementById(cellId).innerHTML = '<img src="cards/'+ cardFromId(card) +'.svg">';
+
+        document.getElementById(backCardCode).innerHTML = '<img src="cards/back.svg">';
+
+        selectedCard = null;
+
+        document.getElementById(backCardCode).style.backgroundColor = "transparent";
     }
 };
