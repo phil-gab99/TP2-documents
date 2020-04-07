@@ -88,7 +88,7 @@ var clic = function(card){
     if(card == backCardCode){
         var newCard = deck[currentCard];
 
-        document.getElementById(card).onclick = "clic("+newCard+")";
+        //document.getElementById(card).onclick = "clic("+newCard+")";
 
         document.getElementById(card).innerHTML = '<img src="cards/'+ cardFromId(newCard) +'.svg">';
 
