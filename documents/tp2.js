@@ -1,5 +1,6 @@
 var backCardCode = 53;
 var emptyCardCode = 52;
+var deckLength = 52;
 var currentCard = 0;
 var deck = [];
 
@@ -28,10 +29,33 @@ var shuffle = function(deck){
     }
 };
 
+var cardFromId = function(id){
+    var number = Math.floor(id / 4) + 1;
+    var type = id % 4;
+
+    switch(number){
+        case 1: number = 'A'; break;
+        case 11: number = 'J'; break;
+        case 12: number = 'Q'; break;
+        case 13: number = 'K'; break; 
+    }
+
+    switch(type){
+        case 0: type = 'C'; break;
+        case 1: type = 'D'; break;
+        case 2: type = 'H'; break;
+        case 3: type = 'S'; break;
+    }
+    console.log(id + ": " + number + type);
+
+    return number + type;
+    
+};
+
 var init = function () {
 
     //Create a deck of 52 cards
-    deck = iota(52);
+    deck = iota(deckLength);
 
     //Shuffle the deck
     shuffle(deck);
@@ -66,11 +90,11 @@ var clic = function(card){
 
         document.getElementById(card).onclick = "clic("+newCard+")";
 
-        document.getElementById(card).innerHTML = '<img src="cards/'+'KD'+'.svg">';
+        document.getElementById(card).innerHTML = '<img src="cards/'+ cardFromId(newCard) +'.svg">';
 
         document.getElementById(card).style.backgroundColor = "lime";
 
-        document.getElementById(card).id = newCard;
+        //document.getElementById(card).id = newCard;
 
         currentCard++;
     }
