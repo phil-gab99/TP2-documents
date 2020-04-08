@@ -2,6 +2,9 @@
 var backCardCode = 53;
 var emptyCardCode = 52;
 var deckLength = 52;
+var deckCode = 66;
+var hCellCount = 5;
+var vCellCount = 5;
 
 //Variables
 var currentCard = null;
@@ -67,9 +70,9 @@ var codeFromId = function(id){
 var buildGameboard = function(){
     var gbStr = "";
 
-    for (var i = 0; i < 5; i++) {
+    for (var i = 0; i < hCellCount; i++) {
         gbStr += '<tr>';
-        for (var j = 0; j < 5; j++) {
+        for (var j = 0; j < vCellCount; j++) {
             var id = ("" + (i+1)) + (j+1) + emptyCardCode;
             gbStr += '<td id="'+id+'" onclick="clic('+id+');"><img src="cards/empty.svg"></td>';
         }
@@ -96,7 +99,7 @@ var buildUI = function(){
         <button onclick="init();" style="float:left;">Nouvelle partie</button>\
         </td>\
         <td></td>\
-        <td id="'+backCardCode+currentCard+'" onclick="clic('+backCardCode+currentCard+');"style="background-color: transparent;">\
+        <td id="'+deckCode+currentCard+'" onclick="clic('+deckCode+currentCard+');"style="background-color: transparent;">\
         <img src="cards/back.svg">\
         </td>\
         <td></td>\
@@ -162,7 +165,7 @@ var getCellNum = function(cellId){
 };
 
 var isDeck = function(cellId){
-    return getCellNum(cellId) == backCardCode;
+    return getCellNum(cellId) == deckCode;
 };
 
 var draw = function(cellId){
@@ -174,16 +177,16 @@ var draw = function(cellId){
 var reinitDeck = function(cellId){
     var cell = document.getElementById(cellId);
     currentCard++;
-    if(currentCard >= deckLength){
+    if(currentCard >= hCellCount * vCellCount){
         cell.innerHTML = '<img src="cards/empty.svg">';
-        endGame();
+        return true;
     }
     else{
         cell.innerHTML = '<img src="cards/back.svg">';
         deckReady = false;
     }
     
-    
+    return false;
 };  
 
 var isEmpty = function(cellId){
@@ -219,17 +222,23 @@ var clic = function(cellId){
     }
     else{
         if(isDeck(selectedCell) && isEmpty(cellId)){
-            reinitDeck(selectedCell);
+            var end = reinitDeck(selectedCell);
             updateCell(cellId, selectedCard);
             unselectCell();
+            if(end){
+                endGame();
+            }
+        }
+        else if(isDeck(selectedCell)){
+            unselectCell();
+            selectCell(cellId, getCardId(cellId));
         }
         else{
-            var cardId = getCardId(cellId);
+            var cardId = getCardId(cellId);//keep a backup
             updateCell(cellId, selectedCard);
             updateCell(selectedCell, cardId, true);
             unselectCell();
         }
-        //
     }
 
 
