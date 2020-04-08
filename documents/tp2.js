@@ -37,15 +37,20 @@ var shuffle = function(deck){
 };
 
 //Get the card code from its id
-var cardFromId = function(id){
-    var number = Math.floor(id / 4) + 1;
+var codeFromId = function(id){
+
+    if(id == emptyCardCode){
+        return "empty";
+    }
+
+    var value = Math.floor(id / 4) + 1;
     var type = id % 4;
 
-    switch(number){
-        case 1: number = 'A'; break;
-        case 11: number = 'J'; break;
-        case 12: number = 'Q'; break;
-        case 13: number = 'K'; break; 
+    switch(value){
+        case 1: value = 'A'; break;
+        case 11: value = 'J'; break;
+        case 12: value = 'Q'; break;
+        case 13: value = 'K'; break; 
     }
 
     switch(type){
@@ -55,7 +60,7 @@ var cardFromId = function(id){
         case 3: type = 'S'; break;
     }
 
-    return number + type;
+    return value + type;
 };
 
 //Builds a string representing the html code of the gameboard
@@ -65,7 +70,7 @@ var buildGameboard = function(){
     for (var i = 0; i < 5; i++) {
         gbStr += '<tr>';
         for (var j = 0; j < 5; j++) {
-            var id = ("" + (i+1)) + (j+1)+"99";
+            var id = ("" + (i+1)) + (j+1) + emptyCardCode;
             gbStr += '<td id="'+id+'" onclick="clic('+id+');"><img src="cards/empty.svg"></td>';
         }
         gbStr += '<td></td>';
@@ -130,96 +135,169 @@ var endGame = function(){
     init();
 };
 
-var selectCell = function(cell, card){
+var selectCell = function(cellId, cardId){
+    var cell = document.getElementById(cellId);
     cell.style.backgroundColor = "lime";
-    selectedCard = card;
-    selectedCell = cell;
+    selectedCard = cardId;
+    selectedCell = cellId;
 };
 
 var unselectCell = function(){
     if(selectedCard != null){
-        selectedCell.style.backgroundColor = "transparent";
+        console.log(selectedCard + ", " + selectedCell);
+        var cell = document.getElementById(selectedCell);
+        cell.style.backgroundColor = "transparent";
         selectedCard = null;
         selectedCell = null;
     }
     
 };
 
-var cardIdFromCellId = function(cellId){
+var getCardId = function(cellId){
     return ("" + cellId).slice(2);
 };
 
-var cellNumFromCellId = function(cellId){
+var getCellNum = function(cellId){
     return ("" + cellId).slice(0,2);
+};
+
+var isDeck = function(cellId){
+    return getCellNum(cellId) == backCardCode;
+};
+
+var draw = function(cellId){
+    var cell = document.getElementById(cellId);
+    cell.innerHTML = '<img src="cards/'+ codeFromId(deck[currentCard]) +'.svg">';
+    deckReady = true;
+};
+
+var reinitDeck = function(cellId){
+    var cell = document.getElementById(cellId);
+    currentCard++;
+    if(currentCard >= deckLength){
+        cell.innerHTML = '<img src="cards/empty.svg">';
+        endGame();
+    }
+    else{
+        cell.innerHTML = '<img src="cards/back.svg">';
+        deckReady = false;
+    }
+    
+    
+};  
+
+var isEmpty = function(cellId){
+    return getCardId(cellId) == emptyCardCode;
+};
+
+var updateCell = function(cellId, cardId, isSelectedCell){
+    var cell = document.getElementById(cellId);
+    cell.id = getCellNum(cellId) + cardId;
+    cell.onclick = function(){clic(cell.id);};
+    cell.innerHTML = '<img src="cards/'+ codeFromId(cardId) +'.svg">';
+    if(isSelectedCell){
+        selectCell(cell.id, cardId);
+    }
 };
 
 //Manages the click of a card or card cell
 var clic = function(cellId){
-    var cell = document.getElementById(cellId);
-    var cardId = cardIdFromCellId(cellId);
-    var cellNum = cellNumFromCellId(cellId);
-
-    //Clicking the deck when it is not ready
-    if(cellNum == backCardCode && selectedCard == null && !deckReady){
-        //Adjust the deck's image to the currentCard
-        cell.innerHTML = '<img src="cards/'+ cardFromId(deck[currentCard]) +'.svg">';
-
-        selectCell(cell, deck[currentCard]);
-
-        deckReady = true;
-    }
-    //Clicking the deck when it is ready with no card in hand
-    else if(cellNum == backCardCode && selectedCard == null && deckReady){
-        selectCell(cell, deck[currentCard]);
-    }
-    //Clicking the deck with a card in hand
-    else if(cellNum == backCardCode && selectedCard != null){
-        unselectCell();
-    }
-    //Clicking an empty cell with a selected card in hand
-    else if(cellNum != backCardCode && selectedCard != null){
-        cell.innerHTML = '<img src="cards/'+ cardFromId(selectedCard) +'.svg">';
-
-        cell.id = cellNum + selectedCard;
-        cell.onclick = function(){clic(cell.id);};
-
-        //If the selected card is from the deck cell and current cell is empty
-        if(cellNumFromCellId(selectedCell.id) == backCardCode && cardId == "99"){
-            selectedCell.innerHTML = '<img src="cards/back.svg">';
-            currentCard++;
-            deckReady = false;
-            if(currentCard >= deckLength){
-                document.getElementById(backCardCode).innerHTML = '<img src="cards/empty.svg">';
-                endGame();
-            }
+    if(isDeck(cellId)){
+        if(selectedCard == null && !deckReady){
+            draw(cellId);
+            selectCell(cellId, deck[currentCard]);
         }
-        //If the selected card is from the deck cell and current cell is not empty
-        else if(cellNumFromCellId(selectedCell.id)){
-            //selectCell(cell, cardId);
+        else if(selectedCard == null && deckReady){
+            selectCell(cellId, deck[currentCard]);
         }
-        //Otherwise exchange the current's cell card with the selected cell
         else{
-            var cpy = document.getElementById(selectedCell.id);
-            if(cardId == "99"){
-                cpy.innerHTML = '<img src="cards/empty.svg">';
-                cpy.id = cellNumFromCellId(selectedCell.id) + "99";
-            }
-            else{
-                cpy.innerHTML = '<img src="cards/'+cardFromId(cardId)+'.svg">';
-                cpy.id = cellNumFromCellId(selectedCell.id) + "" + cardId;
-            }
-
-            cpy.onclick = function(){clic(cpy.id);};
-
-            cell.innerHTML = '<img src="cards/'+cardFromId(selectedCard)+'.svg">';
+            unselectCell();
         }
-        unselectCell();
+    }
+    else if(selectedCard == null){
+        selectCell(cellId, getCardId(cellId));
+    }
+    else{
+        if(isDeck(selectedCell) && isEmpty(cellId)){
+            reinitDeck(selectedCell);
+            updateCell(cellId, selectedCard);
+            unselectCell();
+        }
+        else{
+            var cardId = getCardId(cellId);
+            updateCell(cellId, selectedCard);
+            updateCell(selectedCell, cardId, true);
+            unselectCell();
+        }
+        //
+    }
 
 
-    }
-    else if(cellNum != backCardCode && selectedCard == null){
-        selectCell(cell, cardId);
-    }
+    // var cell = document.getElementById(cellId);
+    // var cardId = getCardId(cellId);
+    // var cellNum = getCellNum(cellId);
+
+    // //Clicking the deck when it is not ready
+    // if(cellNum == backCardCode && selectedCard == null && !deckReady){
+    //     //Adjust the deck's image to the currentCard
+    //     cell.innerHTML = '<img src="cards/'+ codeFromId(deck[currentCard]) +'.svg">';
+
+    //     selectCell(cell, deck[currentCard]);
+
+    //     deckReady = true;
+    // }
+    // //Clicking the deck when it is ready with no card in hand
+    // else if(cellNum == backCardCode && selectedCard == null && deckReady){
+    //     selectCell(cell, deck[currentCard]);
+    // }
+    // //Clicking the deck with a card in hand
+    // else if(cellNum == backCardCode && selectedCard != null){
+    //     unselectCell();
+    // }
+    //Clicking an empty cell with a selected card in hand
+    // else if(cellNum != backCardCode && selectedCard != null){
+    //     //cell.innerHTML = '<img src="cards/'+ codeFromId(selectedCard) +'.svg">';
+
+    //     //cell.id = cellNum + selectedCard;
+    //     //cell.onclick = function(){clic(cell.id);};
+
+    //     //If the selected card is from the deck cell and current cell is empty
+    //     // if(cellNumFromCellId(selectedCell.id) == backCardCode && cardId == "99"){
+    //     //     //selectedCell.innerHTML = '<img src="cards/back.svg">';
+    //     //     //currentCard++;
+    //     //     //deckReady = false;
+    //     //     if(currentCard >= deckLength){
+    //     //         document.getElementById(backCardCode).innerHTML = '<img src="cards/empty.svg">';
+    //     //         endGame();
+    //     //     }
+    //     // }
+    //     //If the selected card is from the deck cell and current cell is not empty
+    //     // else if(cellNumFromCellId(selectedCell.id)){
+    //     //     //selectCell(cell, cardId);
+    //     // }
+    //     //Otherwise exchange the current's cell card with the selected cell
+    //     else{
+    //         var cpy = document.getElementById(selectedCell.id);
+    //         if(cardId == "99"){
+    //             cpy.innerHTML = '<img src="cards/empty.svg">';
+    //             cpy.id = cellNumFromCellId(selectedCell.id) + "99";
+    //         }
+    //         else{
+    //             cpy.innerHTML = '<img src="cards/'+codeFromId(cardId)+'.svg">';
+    //             cpy.id = cellNumFromCellId(selectedCell.id) + "" + cardId;
+    //         }
+
+    //         cpy.onclick = function(){clic(cpy.id);};
+
+    //         cell.innerHTML = '<img src="cards/'+codeFromId(selectedCard)+'.svg">';
+    //     }
+    //     unselectCell();
+
+
+    // }
+    // else if(cellNum != backCardCode && selectedCard == null){
+    //     selectCell(cell, cardId);
+    // }
     // else{
     //     //console.log(selectedCard + cardId);
     //     //var card = deck[cardId];
