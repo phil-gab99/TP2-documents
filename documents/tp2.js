@@ -14,6 +14,8 @@ var deckReady = false;
 
 var deck = [];
 
+var gameboardMatrix = [];
+
 
 //Returns an array containing n elements ranging from 0 to n-1
 var iota = function(n) {
@@ -72,10 +74,13 @@ var buildGameboard = function(){
 
     for (var i = 0; i < vCellCount; i++) {
         gbStr += '<tr>';
+        var line = [];
         for (var j = 0; j < hCellCount; j++) {
             var id = ("" + (i+1)) + (j+1) + emptyCardCode;
             gbStr += '<td id="'+id+'" onclick="clic('+id+');"><img src="cards/empty.svg"></td>';
+            line.push(id);
         }
+        gameboardMatrix.push(line);
         gbStr += '<td id="'+(i+1)+(vCellCount+1)+'"></td>';
         gbStr += '</tr>';
     }
@@ -93,23 +98,22 @@ var buildGameboard = function(){
 var buildUI = function(){
     document.getElementById("b").innerHTML = '\
         <table>\
-        <tbody>\
-        <tr>\
-        <td>\
-        <button onclick="init();" style="float:left;">Nouvelle partie</button>\
-        </td>\
-        <td></td>\
-        <td id="'+deckCode+currentCard+'" onclick="clic('+deckCode+currentCard+');"style="background-color: transparent;">\
-        <img src="cards/back.svg">\
-        </td>\
-        <td></td>\
-        </tr>\
-        <div></div>\
-        </tbody>\
+            <tbody>\
+                <tr>\
+                    <td>\
+                        <button onclick="init();" style="float:left;">Nouvelle partie</button>\
+                    </td>\
+                    <td></td>\
+                    <td id="'+deckCode+currentCard+'" onclick="clic('+deckCode+currentCard+');"style="background-color: transparent;">\
+                        <img src="cards/back.svg">\
+                    </td>\
+                    <td></td>\
+                </tr>\
+                    <div></div>\
+            </tbody>\
         </table>\
         <table>\
-        <tbody id="gameboard">\
-        </tbody>\
+            <tbody id="gameboard"></tbody>\
         </table>\
         '
     document.getElementById("gameboard").innerHTML = buildGameboard();
@@ -193,18 +197,43 @@ var isEmpty = function(cellId){
     return getCardId(cellId) == emptyCardCode;
 };
 
-var updateCell = function(cellId, cardId, isSelectedCell){
+var updateCell = function(cellId, cardId, isSelectedCell, update){
     var cell = document.getElementById(cellId);
     cell.id = getCellNum(cellId) + cardId;
     cell.onclick = function(){clic(cell.id);};
     cell.innerHTML = '<img src="cards/'+ codeFromId(cardId) +'.svg">';
+
     if(isSelectedCell){
         selectCell(cell.id, cardId);
     }
+    else if(update){
+        updateScore(cell.id);
+    }
+    
 };
 
-var updateScore = function(){
-    //TO DO: system to update the score
+var updateScore = function(cellId){
+    var cell = document.getElementById(cellId);
+    var cellNum = getCellNum(cellId);
+    gameboardMatrix[cellNum[0] - 1][cellNum[1] - 1] = cellId+"";
+    
+    calculateScore();
+};
+
+var calculateScore = function(){
+
+    //Here goes the logic to calculate the score
+
+    var score = 0;
+    for (var i = 0; i < gameboardMatrix.length; i++) {
+        for (var j = 0; j < gameboardMatrix[i].length; j++) {
+            var cardId = getCardId(gameboardMatrix[i][j]);
+            if(cardId != emptyCardCode){
+                score += +cardId;
+            }
+        }     
+    }
+    console.log(score);
 };
 
 //Manages the click of a card or card cell
@@ -227,7 +256,7 @@ var clic = function(cellId){
     else{
         if(isDeck(selectedCell) && isEmpty(cellId)){
             var end = reinitDeck(selectedCell);
-            updateCell(cellId, selectedCard);
+            updateCell(cellId, selectedCard, false, true);
             unselectCell();
             if(end){
                 endGame();
@@ -245,6 +274,6 @@ var clic = function(cellId){
         }
     }
 
-    updateScore();
+    
 
 };
