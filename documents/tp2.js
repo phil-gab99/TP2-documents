@@ -213,34 +213,33 @@ var updateCell = function(cellId, newCardId, isSelectedCell, toggleScoreCalculat
     if(toggleScoreCalculation){
         calculateScore();
     }
-    
 };
 
 var updateScore = function(cellId, calculateScore){
     var cell = document.getElementById(cellId);
     var cellNum = getCellNum(cellId);
     var cardId = +getCardId(cellId);
-    statusMatrix[cellNum[0] - 1][cellNum[1] - 1] = cardId;    
+    statusMatrix[cellNum[0] - 1][cellNum[1] - 1] = cardId;
 };
 
 var calculateScore = function(){
     statusMatrix.forEach(function(hand, i){
-        var score = handScore(hand, i);
+        var score = handScore(hand);
         var cellId = i + 1 + "6";
         document.getElementById(cellId).innerHTML = score;
     });
 };
 
-var handScore = function(hand, i){
+var handScore = function(hand){
     var score = 0;
 
-    var values = valuesFrom(hand);
+    var values = copy(valuesFrom(hand));
 
-    console.log("Appel #" + (i+1));
+    //console.log("Appel #" + (i+1));
 
-    var cpy = copy(values);
-    removeEmpty(cpy);
-    score += findPairs(cpy, 0, 0);
+    removeEmpty(values);
+    score += evaluate(brelanOrLess(values, ""));
+
 
     if(score <= 0){
         score = "";
@@ -248,54 +247,63 @@ var handScore = function(hand, i){
     return score;
 };
 
-var findPairs = function(values, count, call){
-    call++;
-    let first = values.shift();
-    let i = values.indexOf(first);
-    if(i >= 0 && first == values[i]){
-        values.splice(i, 1);
-        count++;
-        console.log("2 x " + first + ", count = " + count);
-        console.log("Call deepness: " + call);
+var brelanOrLess = function(cards, result){
+    let first = cards.shift();
+    let i = cards.indexOf(first);
+    let j = -1;
+    if(i >= 0){
+        j = cards.indexOf(first, i + 1);
     }
-    if(values.length > 0){
-        count = findPairs(values, count, call);
+    if(i >= 0 && j >= 0){
+        cards.splice(j, 1);
+        cards.splice(i, 1);
+        result += "3";
+    }
+    else if(i >= 0){
+        cards.splice(i, 1);
+        result += "2";
     }
 
-    return count;
+    if(cards.length > 0){
+        result = brelanOrLess(cards, result);
+    }
 
-    // for(var i = 0; i < values.length - 1; i++){
-    //     values.splice(i, 1);
-    //     var j = indexOf(values[i], i + 1);
-    //     if(values[i] == values[j]){
-    //         count++;
-    //         values.splice(j - 1, 1);
-    //         break;
-    //     }
-    // }
+    return result;
+}
 
-    // var copy = values.slice();
-
-    // copy.forEach(function(card, i){
-    //     if(card != emptyCard){
-    //         var nextOccurenceIndex = copy.indexOf(card, i + 1);
-    //         if(nextOccurenceIndex > 0){
-    //             var nextOccurence = copy[nextOccurenceIndex];
-    //             if(card == nextOccurence){
-    //                 //console.log("1: " + copy);
-    //                 copy.splice(i, 1);
-    //                 copy.splice(nextOccurenceIndex - 1, 1);
-    //                 count++;
-    //                 console.log(count);
-    //                 //console.log("2: " + copy);
-    //                 findPairs(copy, count);
-    //             }
-    //         }
-    //     }
-    // });
-
-    // return count;
+var evaluate = function(result){
+    if(result == "32" || result == "23"){//FULL HOUSE
+        return 25;
+    }
+    else if(result == "3"){//BRELAN
+        return 10;
+    }
+    else if(result == "22"){//DOUBLE PAIR
+        return 4;
+    }
+    else if(result == "2"){//PAIR
+        return 2;
+    }
+    return 0;
 };
+
+
+// var findPairs = function(values, count){
+//     // call++;
+//     let first = values.shift();
+//     let i = values.indexOf(first);
+//     if(i >= 0){
+//         values.splice(i, 1);
+//         count++;
+//         // console.log("2 x " + first + ", count = " + count);
+//         // console.log("Call deepness: " + call);
+//     }
+//     if(values.length > 0){
+//         count = findPairs(values, count);
+//     }
+
+//     return count;
+// };
 
 var copy = function(array){
     return array;
