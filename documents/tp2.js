@@ -1,38 +1,38 @@
 //Constants
-var backCardCode = 53;
-var emptyCardCode = 52;
+var backCard = 53;
+var emptyCard = 52;
+
+var deckCell = 66;
+
+var boardWidth = 5;
+var boardHeight = 5;
 var deckLength = 52;
-var deckCode = 66;
-var hCellCount = 5;
-var vCellCount = 5;
+
+var selectedColor = "lime";
+var unselectedColor = "transparent";
 
 //Variables
-var currentCard = null;
+var drawnCard = null;
 var selectedCard = null;
 var selectedCell = null;
-var deckReady = false;
+var cardIsDrawn = false;
 
 var deck = [];
 
-var gameboardMatrix = [];
-
+var statusMatrix = [];
 
 //Returns an array containing n elements ranging from 0 to n-1
 var iota = function(n) {
-    if(Math.floor(n) == n && n >= 0){
-        table = Array(n);
-        for (var i = 0; i < table.length; i++) {
-            table[i] = i;
-        }
-    }
+    var table = Array(n).fill(n - 1).map(function(x, i){
+        return x - i;
+    });
     return table;
+
 };
 
 //Shuffles the deck of cards
 var shuffle = function(deck){
-
     for(var i = deck.length - 1; i > 0; i--){
-
         //Get a random card from the cards among the beggining to the current index
         var randI = Math.floor(Math.random() * Math.floor(i));
 
@@ -43,19 +43,21 @@ var shuffle = function(deck){
 
 //Get the card code from its id
 var codeFromId = function(id){
-
-    if(id == emptyCardCode){
+    if(id == emptyCard){
         return "empty";
     }
+    else if(id == backCard){
+        return "back";
+    }
 
-    var value = Math.floor(id / 4) + 1;
+    var value = getValue(id);
     var type = id % 4;
 
     switch(value){
         case 1: value = 'A'; break;
         case 11: value = 'J'; break;
         case 12: value = 'Q'; break;
-        case 13: value = 'K'; break; 
+        case 13: value = 'K'; break;
     }
 
     switch(type){
@@ -70,28 +72,28 @@ var codeFromId = function(id){
 
 //Builds a string representing the html code of the gameboard
 var buildGameboard = function(){
-    var gbStr = "";
+    var boardString = "";
 
-    for (var i = 0; i < vCellCount; i++) {
-        gbStr += '<tr>';
-        var line = [];
-        for (var j = 0; j < hCellCount; j++) {
-            var id = ("" + (i+1)) + (j+1) + emptyCardCode;
-            gbStr += '<td id="'+id+'" onclick="clic('+id+');"><img src="cards/empty.svg"></td>';
-            line.push(id);
+    for (var i = 0; i < boardHeight; i++) {
+        boardString += '<tr>';
+        var row = [];
+        for (var j = 0; j < boardWidth; j++) {
+            var id = ("" + (i+1)) + (j+1) + emptyCard;
+            boardString += '<td id="'+id+'" onclick="clic('+id+');"><img src="cards/'+codeFromId(emptyCard)+'.svg"></td>';
+            row.push(emptyCard);
         }
-        gameboardMatrix.push(line);
-        gbStr += '<td id="'+(i+1)+(vCellCount+1)+'"></td>';
-        gbStr += '</tr>';
+        statusMatrix.push(row);
+        boardString += '<td id="'+(i+1)+(boardWidth+1)+'"></td>';
+        boardString += '</tr>';
     }
 
-    gbStr += '<tr>';
-    for (var j = 0; j < hCellCount; j++) {
-        gbStr += '<td id="'+(vCellCount+1)+(j+1)+'"></td>';
+    boardString += '<tr>';
+    for (var j = 0; j < boardWidth; j++) {
+        boardString += '<td id="'+(boardHeight+1)+(j+1)+'"></td>';
     }
-    gbStr += '<td id="score">0</td></tr>';
+    boardString += '<td id="score">0</td></tr>';
 
-    return gbStr;
+    return boardString;
 };
 
 //Builds the UI
@@ -104,8 +106,8 @@ var buildUI = function(){
                         <button onclick="init();" style="float:left;">Nouvelle partie</button>\
                     </td>\
                     <td></td>\
-                    <td id="'+deckCode+currentCard+'" onclick="clic('+deckCode+currentCard+');"style="background-color: transparent;">\
-                        <img src="cards/back.svg">\
+                    <td id="'+deckCell+drawnCard+'" onclick="clic('+deckCell+drawnCard+');"style="background-color:'+unselectedColor+'">\
+                        <img src="cards/'+codeFromId(backCard)+'.svg">\
                     </td>\
                     <td></td>\
                 </tr>\
@@ -121,19 +123,22 @@ var buildUI = function(){
 
 //Called on page load
 var init = function () {
-    selectedCard = null;
-    selectedCell = null;
+    var selectedCard = null;
+    var selectedCell = null;
+    var cardIsDrawn = false;
 
-    deckReady = false;
+    statusMatrix = [];
 
     //Create a deck of 52 cards
     deck = iota(deckLength);
 
     shuffle(deck);
 
-    currentCard = 0;
+    drawnCard = 0;
 
     buildUI();
+
+
 };
 
 //Ends the current game by reseting the UI and game progress
@@ -144,20 +149,18 @@ var endGame = function(){
 
 var selectCell = function(cellId, cardId){
     var cell = document.getElementById(cellId);
-    cell.style.backgroundColor = "lime";
+    cell.style.backgroundColor = selectedColor;
     selectedCard = cardId;
     selectedCell = cellId;
 };
 
 var unselectCell = function(){
     if(selectedCard != null){
-        console.log(selectedCard + ", " + selectedCell);
         var cell = document.getElementById(selectedCell);
-        cell.style.backgroundColor = "transparent";
+        cell.style.backgroundColor = unselectedColor;
         selectedCard = null;
         selectedCell = null;
-    }
-    
+    }  
 };
 
 var getCardId = function(cellId){
@@ -168,112 +171,192 @@ var getCellNum = function(cellId){
     return ("" + cellId).slice(0,2);
 };
 
-var isDeck = function(cellId){
-    return getCellNum(cellId) == deckCode;
+var isDeckCell = function(cellId){
+    return getCellNum(cellId) == deckCell;
 };
 
 var draw = function(cellId){
     var cell = document.getElementById(cellId);
-    cell.innerHTML = '<img src="cards/'+ codeFromId(deck[currentCard]) +'.svg">';
-    deckReady = true;
+    cell.innerHTML = '<img src="cards/'+ codeFromId(deck[drawnCard]) +'.svg">';
+    cardIsDrawn = true;
 };
 
-var reinitDeck = function(cellId){
+var initDeck = function(cellId){
     var cell = document.getElementById(cellId);
-    currentCard++;
-    if(currentCard >= hCellCount * vCellCount){
-        cell.innerHTML = '<img src="cards/empty.svg">';
-        return true;
+    drawnCard++;
+    if(drawnCard >= boardWidth * boardHeight){
+        cell.innerHTML = '<img src="cards/'+codeFromId(emptyCard)+'.svg">';
+        cardIsDrawn = true;
     }
     else{
-        cell.innerHTML = '<img src="cards/back.svg">';
-        deckReady = false;
+        cell.innerHTML = '<img src="cards/'+codeFromId(backCard)+'.svg">';
+        cardIsDrawn = false;
     }
     
-    return false;
+    return cardIsDrawn;
 };  
 
 var isEmpty = function(cellId){
-    return getCardId(cellId) == emptyCardCode;
+    return getCardId(cellId) == emptyCard;
 };
 
-var updateCell = function(cellId, cardId, isSelectedCell, update){
+var updateCell = function(cellId, newCardId, isSelectedCell, toggleScoreCalculation){
     var cell = document.getElementById(cellId);
-    cell.id = getCellNum(cellId) + cardId;
-    cell.onclick = function(){clic(cell.id);};
-    cell.innerHTML = '<img src="cards/'+ codeFromId(cardId) +'.svg">';
-
+    cell.id = getCellNum(cellId) + newCardId;
+    cellId = cell.id;
+    cell.onclick = function(){clic(cellId);};
+    cell.innerHTML = '<img src="cards/'+ codeFromId(newCardId) +'.svg">';
     if(isSelectedCell){
-        selectCell(cell.id, cardId);
+        selectCell(cellId, newCardId);
     }
-    else if(update){
-        updateScore(cell.id);
+    updateScore(cellId);
+    if(toggleScoreCalculation){
+        calculateScore();
     }
     
 };
 
-var updateScore = function(cellId){
+var updateScore = function(cellId, calculateScore){
     var cell = document.getElementById(cellId);
     var cellNum = getCellNum(cellId);
-    gameboardMatrix[cellNum[0] - 1][cellNum[1] - 1] = cellId+"";
-    
-    calculateScore();
+    var cardId = +getCardId(cellId);
+    statusMatrix[cellNum[0] - 1][cellNum[1] - 1] = cardId;    
 };
 
 var calculateScore = function(){
+    statusMatrix.forEach(function(hand, i){
+        var score = handScore(hand, i);
+        var cellId = i + 1 + "6";
+        document.getElementById(cellId).innerHTML = score;
+    });
+};
 
-    //Here goes the logic to calculate the score
-
+var handScore = function(hand, i){
     var score = 0;
-    for (var i = 0; i < gameboardMatrix.length; i++) {
-        for (var j = 0; j < gameboardMatrix[i].length; j++) {
-            var cardId = getCardId(gameboardMatrix[i][j]);
-            if(cardId != emptyCardCode){
-                score += +cardId;
-            }
-        }     
+
+    var values = valuesFrom(hand);
+
+    console.log("Appel #" + (i+1));
+
+    var cpy = copy(values);
+    removeEmpty(cpy);
+    score += findPairs(cpy, 0, 0);
+
+    if(score <= 0){
+        score = "";
     }
-    console.log(score);
+    return score;
+};
+
+var findPairs = function(values, count, call){
+    call++;
+    let first = values.shift();
+    let i = values.indexOf(first);
+    if(i >= 0 && first == values[i]){
+        values.splice(i, 1);
+        count++;
+        console.log("2 x " + first + ", count = " + count);
+        console.log("Call deepness: " + call);
+    }
+    if(values.length > 0){
+        count = findPairs(values, count, call);
+    }
+
+    return count;
+
+    // for(var i = 0; i < values.length - 1; i++){
+    //     values.splice(i, 1);
+    //     var j = indexOf(values[i], i + 1);
+    //     if(values[i] == values[j]){
+    //         count++;
+    //         values.splice(j - 1, 1);
+    //         break;
+    //     }
+    // }
+
+    // var copy = values.slice();
+
+    // copy.forEach(function(card, i){
+    //     if(card != emptyCard){
+    //         var nextOccurenceIndex = copy.indexOf(card, i + 1);
+    //         if(nextOccurenceIndex > 0){
+    //             var nextOccurence = copy[nextOccurenceIndex];
+    //             if(card == nextOccurence){
+    //                 //console.log("1: " + copy);
+    //                 copy.splice(i, 1);
+    //                 copy.splice(nextOccurenceIndex - 1, 1);
+    //                 count++;
+    //                 console.log(count);
+    //                 //console.log("2: " + copy);
+    //                 findPairs(copy, count);
+    //             }
+    //         }
+    //     }
+    // });
+
+    // return count;
+};
+
+var copy = function(array){
+    return array;
+};
+
+var removeEmpty = function(hand){
+    var i = hand.indexOf(+emptyCard);
+    while(i >= 0){
+        hand.splice(i, 1);
+        i = hand.indexOf(+emptyCard);
+    }
+}
+
+var getValue = function(cardId){
+    return Math.floor(cardId / 4) + 1;
+};
+
+var valuesFrom = function(cards){
+    var values = cards.map(function(card){
+        if(card != emptyCard){
+            return getValue(card);
+        }
+        return emptyCard;
+    });
+    return values;
 };
 
 //Manages the click of a card or card cell
 var clic = function(cellId){
-    if(isDeck(cellId)){
-        if(selectedCard == null && !deckReady){
-            draw(cellId);
-            selectCell(cellId, deck[currentCard]);
-        }
-        else if(selectedCard == null && deckReady){
-            selectCell(cellId, deck[currentCard]);
-        }
-        else{
+    if(isDeckCell(cellId)){
+        if(selectedCard != null){
             unselectCell();
+        }
+        else {
+            if(!cardIsDrawn){
+                draw(cellId);
+            }
+            selectCell(cellId, deck[drawnCard]);
         }
     }
     else if(selectedCard == null){
         selectCell(cellId, getCardId(cellId));
     }
     else{
-        if(isDeck(selectedCell) && isEmpty(cellId)){
-            var end = reinitDeck(selectedCell);
+        if(isDeckCell(selectedCell) && isEmpty(cellId)){
+            var end = initDeck(selectedCell);
             updateCell(cellId, selectedCard, false, true);
             unselectCell();
             if(end){
                 endGame();
             }
         }
-        else if(isDeck(selectedCell)){
+        else if(isDeckCell(selectedCell)){
             unselectCell();
             selectCell(cellId, getCardId(cellId));
         }
         else{
             var cardId = getCardId(cellId);//keep a backup
             updateCell(cellId, selectedCard);
-            updateCell(selectedCell, cardId, true);
+            updateCell(selectedCell, cardId, true, true);
             unselectCell();
         }
     }
-
-    
-
 };
