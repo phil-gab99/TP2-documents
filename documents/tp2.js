@@ -4,7 +4,7 @@
 * @Version 1.8.0 2020-04-22
 *
 * This program aims to define an html page upon which the game of Poker
-* shuffle, a type of solitary game, can be played following the general poker
+* Shuffle, a type of solitary game, can be played following the general poker
 * rules concerning the ranking of hand combinations and associating a score for
 * how the main grid is filled
 **/
@@ -25,7 +25,8 @@ var clickState = [];   //Array of booleans indicating when cell is clicked
 
 /*
 * The iota function is responsible for creating an array of determined length
-* filled with integer values at its indexes ranging from 0 up to n-1
+* filled with integer values at its indexes in descending order ranging from
+* n-1 up to 0
 *
 * @param n Integer indicating the length of the array to return
 * @return table Array with the set length and values at its indexes ranging
@@ -35,9 +36,9 @@ var clickState = [];   //Array of booleans indicating when cell is clicked
 var iota = function(n) {
     var table = [];
     if(Math.floor(n) == n && n >= 0) {
-        table = Array(n).fill(0).map(
-            function(_,i) {
-                return i;
+        table = Array(n).fill(n - 1).map(
+            function(x,i) {
+                return x - i;
             }
         );
     }
@@ -55,7 +56,7 @@ var iota = function(n) {
 
 var shuffle = function(deck) {
 
-    var shuffledDeck = deck.slice().reverse();
+    var shuffledDeck = deck.slice();
 
     shuffledDeck = shuffledDeck.map(
         function(card, pos) {
@@ -68,6 +69,7 @@ var shuffle = function(deck) {
             //Replacing randomly selected card so as to not duplicate it
             var temp = shuffledDeck[randCard];
             shuffledDeck[randCard] = card;
+
             return temp;
         }
     );
