@@ -67,6 +67,8 @@ var codeFromId = function(id){
         case 3: type = 'S'; break;
     }
 
+    //type = 'C';
+
     return value + type;
 };
 
@@ -233,24 +235,39 @@ var calculateScore = function(){
 var handScore = function(hand){
     var score = 0;
 
+    var cpy = hand;
     var values = copy(valuesFrom(hand));
+    //console.log("2: " + typesFrom(cpy));
+    var types = copy(typesFrom(cpy));
 
     //console.log("Appel #" + (i+1));
     removeEmpty(values);
     score = evaluate(fullHouseAndLess(values, ""));
 
+    
+
     if(score < 25){
         values = copy(valuesFrom(hand));
-        
-        removeEmpty(values);
-        var result = quinte(values);
+
+        var result = flush(types);
         if(result > score){
             score = result;
         }
+        
+        
+        removeEmpty(values);
+        result = quinte(values);
+        if(result == 15 && flush(types) > 0){
+            score = 75;
+        }
+        // if(result > score){
+        //     score = result;
+        //     result = flush(types);        
+        //     if(result > 0){
+        //         score = 75;
+        //     }    
+        // }
     }
-
-    //score = 
-
 
     if(score <= 0){
         score = "";
@@ -261,23 +278,33 @@ var handScore = function(hand){
 var quinte = function(cards){
     trier(cards);
     var streak = 1;
+    var isFlush = true;
     var aceAndKing = cards[0] == 1 && cards[cards.length - 1] == 13;
 
-    if(aceAndKing){
-        streak++;
-    }
     for (var i = 1; i < cards.length; i++) {
-        if(cards[i] - cards[i - 1] == 1){
+        if(cards[i] - cards[i - 1] == 1 || (aceAndKing && i == 1)){
             streak++;
         }
-        else if(!(aceAndKing && i == 1)){
+        else{
             streak = 0;
         }
     }
-    //console.log(cards + ": " + streak);
     if(streak == 5){
-        //console.log("allo");
         return 15;
+    }
+    return 0;
+};
+
+var flush = function(cards){
+    var isFlush = true;
+    for (var i = 1; i < cards.length; i++) {
+        if(cards[i] == emptyCard || cards[i] - cards[i - 1] != 0){
+            isFlush = false;
+            break;
+        }
+    }
+    if (isFlush) {
+        return 20;
     }
     return 0;
 };
@@ -399,7 +426,12 @@ var getValue = function(cardId){
     return Math.floor(cardId / 4) + 1;
 };
 
+var getType = function(cardId){
+    return cardId % 4;
+};
+
 var valuesFrom = function(cards){
+    //console.log(cards);
     var values = cards.map(function(card){
         if(card != emptyCard){
             return getValue(card);
@@ -407,6 +439,16 @@ var valuesFrom = function(cards){
         return emptyCard;
     });
     return values;
+};
+
+var typesFrom = function(cards){
+     var types = cards.map(function(card){
+        if(card != emptyCard){
+            return getType(card);
+        }
+        return emptyCard;
+    });
+    return types;
 };
 
 //Manages the click of a card or card cell
@@ -446,3 +488,6 @@ var clic = function(cellId){
         }
     }
 };
+
+//console.log(handScore([0,4,8,12,16]));
+
