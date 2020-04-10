@@ -33,7 +33,7 @@ var clickState = [];   //Array of booleans indicating when cell is clicked
 **/
 
 var iota = function(n) {
-    var table [];
+    var table = [];
     if(Math.floor(n) == n && n >= 0) {
         table = Array(n).fill(0).map(
             function(_,i) {
