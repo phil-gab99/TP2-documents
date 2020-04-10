@@ -1,7 +1,7 @@
 /*
 * @Vincent Falardeau
 * @Philippe Gabriel
-* @Version 1.8.0 2020-04-22
+* @Version 1.8.4 2020-04-22
 *
 * This program aims to define an html page upon which the game of Poker
 * Shuffle, a type of solitary game, can be played following the general poker
