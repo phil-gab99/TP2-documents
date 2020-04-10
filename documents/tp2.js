@@ -236,9 +236,20 @@ var handScore = function(hand){
     var values = copy(valuesFrom(hand));
 
     //console.log("Appel #" + (i+1));
-
     removeEmpty(values);
-    score += evaluate(brelanOrLess(values, ""));
+    score = evaluate(fullHouseAndLess(values, ""));
+
+    if(score < 25){
+        values = copy(valuesFrom(hand));
+        
+        removeEmpty(values);
+        var result = quinte(values);
+        if(result > score){
+            score = result;
+        }
+    }
+
+    //score = 
 
 
     if(score <= 0){
@@ -247,14 +258,78 @@ var handScore = function(hand){
     return score;
 };
 
-var brelanOrLess = function(cards, result){
+var quinte = function(cards){
+    trier(cards);
+    var streak = 1;
+    var aceAndKing = cards[0] == 1 && cards[cards.length - 1] == 13;
+
+    if(aceAndKing){
+        streak++;
+    }
+    for (var i = 1; i < cards.length; i++) {
+        if(cards[i] - cards[i - 1] == 1){
+            streak++;
+        }
+        else if(!(aceAndKing && i == 1)){
+            streak = 0;
+        }
+    }
+    //console.log(cards + ": " + streak);
+    if(streak == 5){
+        //console.log("allo");
+        return 15;
+    }
+    return 0;
+};
+
+///////////////////////////////////////////////////////////////////////
+
+// Procédure qui trie un tableau en ordre croissant in-situ
+
+var trier = function (t) {  // tri par sélection
+    for (var i=0; i<t.length-1; i++) {
+        var m = positionMin(t, i);
+        var temp = t[i];
+        t[i] = t[m];
+        t[m] = temp;
+    }
+};
+
+var positionMin = function (t, debut) {
+
+    // suppose que t.length > debut
+
+    var posMin = debut;
+
+    for (var i=debut+1; i<t.length; i++) {
+        if (t[i] < t[posMin]) {
+            posMin = i;
+        }
+    }
+
+    return posMin;
+};
+
+///////////////////////////////////////////////////////////////////////
+
+var fullHouseAndLess = function(cards, result){
     let first = cards.shift();
     let i = cards.indexOf(first);
     let j = -1;
+    let k = -1;
     if(i >= 0){
         j = cards.indexOf(first, i + 1);
+        if(j >= 0){
+            k = cards.indexOf(first, j + 1);
+        }
     }
-    if(i >= 0 && j >= 0){
+    if(i >= 0 && j >= 0 && k >= 0){
+        cards.splice(j, 1);
+        cards.splice(i, 1);
+        cards.splice(k, 1);
+        result += "4";
+    }
+    else if(i >= 0 && j >= 0){
         cards.splice(j, 1);
         cards.splice(i, 1);
         result += "3";
@@ -265,14 +340,17 @@ var brelanOrLess = function(cards, result){
     }
 
     if(cards.length > 0){
-        result = brelanOrLess(cards, result);
+        result = fullHouseAndLess(cards, result);
     }
 
     return result;
 }
 
 var evaluate = function(result){
-    if(result == "32" || result == "23"){//FULL HOUSE
+    if(result == "4"){
+        return 50;
+    }
+    else if(result == "32" || result == "23"){//FULL HOUSE
         return 25;
     }
     else if(result == "3"){//BRELAN
