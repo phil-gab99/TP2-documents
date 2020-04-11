@@ -1,3 +1,9 @@
+
+///////////////////////////////////////////////////////////////////////////////
+//TO DO: make the comments cleaner in general
+//       unit tests
+///////////////////////////////////////////////////////////////////////////////
+
 //Constants
 var backCard = 53;
 var emptyCard = 52;
@@ -25,6 +31,8 @@ var selectedCell = null;
 var deck = [];
 //Contains the gameboard as a matrix.
 var gameboardContent = [];
+
+var totalScore = 0;
 
 //Returns an array containing n elements ranging from 0 to n-1
 //Takes n, an integer representing the array's length.
@@ -177,8 +185,10 @@ var init = function () {
 
     //Make a matrix representing the gameboard's content, 
     //filled initially with empty cards.
-    gameboardContent =  Array(boardHeight).fill(
-                            Array(boardWidth).fill(emptyCard));
+    gameboardContent =  Array(boardHeight).fill(0);
+    gameboardContent = gameboardContent.map(function(x){
+        return Array(boardWidth).fill(emptyCard);
+    });
 
     //Create a deck of 52 cards.
     deck = iota(deckLength);
@@ -197,7 +207,7 @@ var init = function () {
 //TO DO: display the final score
 ///////////////////////////////////////////////////////////////////////////////
 var endGame = function(){
-    window.alert("Game Over");
+    window.alert("Votre pointage final est " + totalScore);
     init();
 };
 
@@ -375,6 +385,11 @@ var clic = function(cellId){
     }
 };
 
+///////////////////////////////////////////////////////////////////////////////
+//TO DO: comment that section
+//       refine it
+///////////////////////////////////////////////////////////////////////////////
+
 var updateScore = function(cellId, calculateScore){
     var cell = document.getElementById(cellId);
     var cellNum = getCellNum(cellId);
@@ -383,48 +398,49 @@ var updateScore = function(cellId, calculateScore){
 };
 
 var calculateScore = function(){
+    totalScore = 0;
     gameboardContent.forEach(function(hand, i){
         var score = handScore(hand);
+        totalScore += +score;
         var cellId = i + 1 + "6";
         document.getElementById(cellId).innerHTML = score;
     });
+    transpose(gameboardContent).forEach(function(hand, i){
+        var score = handScore(hand);
+        totalScore += +score;
+        var cellId = "6" + (i + 1);
+        document.getElementById(cellId).innerHTML = score;
+    });
+    document.getElementById("score").innerHTML = totalScore;
+};
+
+var transpose = function(matrix){
+    var matrixT = Array(matrix[0].length).fill(0);
+    matrixT = matrixT.map(function(x){
+        return Array(matrix.length).fill(emptyCard);
+    });
+    for(var i = 0; i < matrix.length; i++){
+        for(var j = 0; j < matrix[i].length; j++){
+            matrixT[j][i] = matrix[i][j];
+        }
+    }
+    return matrixT;
 };
 
 var handScore = function(hand){
+    var result = 0;
     var score = 0;
 
-    var cpy = hand;
-    var values = copy(valuesFrom(hand));
-    //console.log("2: " + typesFrom(cpy));
-    var types = copy(typesFrom(cpy));
+    var values = valuesFrom(hand);
+    var types = typesFrom(hand);
 
-    //console.log("Appel #" + (i+1));
-    removeEmpty(values);
-    score = evaluate(fullHouseAndLess(values, ""));
+    var cpy = copy(values);
+    removeEmpty(cpy);
+    score = evaluate(fullHouseAndLess(cpy, ""));
 
-    
-
-    if(score < 25){
-        values = copy(valuesFrom(hand));
-
-        var result = flush(types);
-        if(result > score){
-            score = result;
-        }
-        
-        
-        removeEmpty(values);
-        result = quinte(values);
-        if(result == 15 && flush(types) > 0){
-            score = 75;
-        }
-        // if(result > score){
-        //     score = result;
-        //     result = flush(types);        
-        //     if(result > 0){
-        //         score = 75;
-        //     }    
-        // }
+    result = quinteFlush(values, types);
+    if(result > score){
+        score = result;
     }
 
     if(score <= 0){
@@ -433,19 +449,28 @@ var handScore = function(hand){
     return score;
 };
 
-var quinte = function(cards){
+var quinteFlush = function(cards, types){
     trier(cards);
     var streak = 1;
-    var isFlush = true;
-    var aceAndKing = cards[0] == 1 && cards[cards.length - 1] == 13;
+    var royale = cards[0] == 1 && cards[cards.length - 1] == 13;
 
     for (var i = 1; i < cards.length; i++) {
-        if(cards[i] - cards[i - 1] == 1 || (aceAndKing && i == 1)){
+        if(cards[i] - cards[i - 1] == 1 || (royale && i == 1)){
             streak++;
         }
         else{
             streak = 0;
         }
+    }
+    var isFlush = flush(types) == 20;
+    if(streak == 5 && isFlush && royale){
+        return 100;
+    }
+    if(streak == 5 && isFlush){
+        return 75;
+    }
+    if(isFlush){
+        return 20;
     }
     if(streak == 5){
         return 15;
@@ -466,36 +491,6 @@ var flush = function(cards){
     }
     return 0;
 };
-
-///////////////////////////////////////////////////////////////////////
-
-// Procédure qui trie un tableau en ordre croissant in-situ
-
-var trier = function (t) {  // tri par sélection
-    for (var i=0; i<t.length-1; i++) {
-        var m = positionMin(t, i);
-        var temp = t[i];
-        t[i] = t[m];
-        t[m] = temp;
-    }
-};
-
-var positionMin = function (t, debut) {
-
-    // suppose que t.length > debut
-
-    var posMin = debut;
-
-    for (var i=debut+1; i<t.length; i++) {
-        if (t[i] < t[posMin]) {
-            posMin = i;
-        }
-    }
-
-    return posMin;
-};
-
-///////////////////////////////////////////////////////////////////////
 
 var fullHouseAndLess = function(cards, result){
     let first = cards.shift();
@@ -542,7 +537,7 @@ var evaluate = function(result){
         return 10;
     }
     else if(result == "22"){//DOUBLE PAIR
-        return 4;
+        return 5;
     }
     else if(result == "2"){//PAIR
         return 2;
@@ -550,26 +545,8 @@ var evaluate = function(result){
     return 0;
 };
 
-
-// var findPairs = function(values, count){
-//     // call++;
-//     let first = values.shift();
-//     let i = values.indexOf(first);
-//     if(i >= 0){
-//         values.splice(i, 1);
-//         count++;
-//         // console.log("2 x " + first + ", count = " + count);
-//         // console.log("Call deepness: " + call);
-//     }
-//     if(values.length > 0){
-//         count = findPairs(values, count);
-//     }
-
-//     return count;
-// };
-
 var copy = function(array){
-    return array;
+    return array.slice();
 };
 
 var removeEmpty = function(hand){
@@ -581,8 +558,9 @@ var removeEmpty = function(hand){
 };
 
 var valuesFrom = function(cards){
-    //console.log(cards);
-    var values = cards.map(function(card){
+    var values = copy(cards);
+
+    values = values.map(function(card){
         if(card != emptyCard){
             return getValue(card);
         }
@@ -601,5 +579,68 @@ var typesFrom = function(cards){
     return types;
 };
 
-//console.log(handScore([0,4,8,12,16]));
+var testHands = function(){
+    console.log(handScore([ 2, 37, 31, 44, 23 ]) == 0);  //Nothing
+
+    console.log(handScore([ 39, 51, 43, 47, 3 ]) == 100);//Quinte Flush Royale
+
+    console.log(handScore([ 0, 4, 8, 12, 16 ]) == 75);   //Quinte Flush
+    console.log(handScore([ 2, 6, 14, 10, 18 ]) == 75);  //With ace at the end
+
+    console.log(handScore([ 0, 2, 43, 1, 3 ]) == 50);    //Carré
+
+    console.log(handScore([ 0, 2, 43, 42, 3 ]) == 25);   //FullHouse
+
+    console.log(handScore([ 0, 48, 24, 28, 36 ]) == 20); //Flush
+
+    console.log(handScore([ 21, 25, 17, 14, 28 ]) == 15);//Quinte
+    console.log(handScore([ 49, 3, 39, 40, 47 ]) == 15); //With ace at the end
+    console.log(handScore([ 2, 7, 13, 11, 18 ]) == 15);  //With ace at the beggining
+
+    console.log(handScore([ 6, 7, 17, 5, 28 ]) == 10);   //Brelan
+
+    console.log(handScore([ 6, 7, 17, 19, 28 ]) == 5);//Double paire
+
+    console.log(handScore([ 6, 7, 17, 43, 28 ]) == 2);//Paire
+};
+
+
+
+//Extrait des notes de cours de Monsieur Marc Feeley, 
+//du cours IFT1015 à la session d'hiver 2020
+///////////////////////////////////////////////////////////////////////
+
+// Procédure qui trie un tableau en ordre croissant in-situ
+
+var trier = function (t) {  // tri par sélection
+    for (var i=0; i<t.length-1; i++) {
+        var m = positionMin(t, i);
+        var temp = t[i];
+        t[i] = t[m];
+        t[m] = temp;
+    }
+};
+
+var positionMin = function (t, debut) {
+
+    // suppose que t.length > debut
+
+    var posMin = debut;
+
+    for (var i=debut+1; i<t.length; i++) {
+        if (t[i] < t[posMin]) {
+            posMin = i;
+        }
+    }
+
+    return posMin;
+};
+
+///////////////////////////////////////////////////////////////////////
+
+//testHands();
+
+
+
+
 
