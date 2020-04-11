@@ -13,6 +13,7 @@
 // TODO: Play the game to find bugs if any
 // OPTIMIZE: calScore function for each hand combination, wait for instructions
     // IDEA: The removeEmpty(hand) is good start for minimizing calculations
+    // TODO: Rework logic using tree of relations between hands
 
 var mixDeck = []; //Array of randomly ordered cards in an integer encoding
 var currCard = 0; //Index indicating the next card to be flipped from pile
@@ -294,7 +295,6 @@ var getCardNum = function(cardPath) {
 
 //Same suit --> (x & 3)  == (y & 3)
 //Same rank --> (x >> 2) == (y >> 2)
-// NOTE: Consider forEach, check teacher's answer on matter
 
 var calScore = function(hand) {
 
@@ -651,17 +651,22 @@ var scoreSystem = function() {
     var cScore = 0; //Integer holding the score of a column
     var tScore = 0; //Integer holding the total score of the grid
 
+    var rCellScore;                                //Row scores HTML element
+    var cCellScore;                                //Column scores HTML element
+    var tCellScore = document.getElementById('T'); //Total score HTML element
+
     var filled = true; //Boolean indicating if grid has been filled
 
     boardState.forEach(
         function(line, pos) {
-            rScore = calScore(sort(line));
-            document.getElementById('R' + pos).innerHTML
-            = (rScore == 0) ? "" : rScore;
 
+            rCellScore = document.getElementById('R' + pos);
+            rScore = calScore(sort(line));
+            rCellScore.innerHTML = (rScore == 0) ? "" : rScore;
+
+            cCellScore = document.getElementById('C' + pos);
             cScore = calScore(sort(getCol(boardState,pos)));
-            document.getElementById('C' + pos).innerHTML
-            = (cScore == 0) ? "" : cScore;
+            cCellScore.innerHTML = (cScore == 0) ? "" : cScore;
 
             tScore += rScore + cScore;
 
@@ -670,7 +675,7 @@ var scoreSystem = function() {
         }
     );
 
-    document.getElementById('T').innerHTML = tScore;
+    tCellScore.innerHTML = tScore;
 
     if (filled) {
         setTimeout(function() { //Wait until content is loaded before pop-up
