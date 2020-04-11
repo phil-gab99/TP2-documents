@@ -1,153 +1,169 @@
+/*
+TODO
+    Unit tests.
+    Make sure it behaves like the professor's.
+    Comment the score calculation logic.
+*/
 
 ///////////////////////////////////////////////////////////////////////////////
-//TO DO: make the comments cleaner in general
-//       unit tests
-///////////////////////////////////////////////////////////////////////////////
-
 //Constants
+///////////////////////////////////////////////////////////////////////////////
+
+//Ids for special cards
 var backCard = 53;
 var emptyCard = 52;
 
+//Cell number of the cell containing the deck of cards
 var deckCell = 66;
 
-var boardWidth = 5;
-var boardHeight = 5;
-var deckLength = 52;
+///////////////////////////////////////////////////////////////////////////////
+//Global variables
+///////////////////////////////////////////////////////////////////////////////
 
-var selectedColor = "lime";
-var unselectedColor = "transparent";
-
-//Variables
-
-//Represents the index (in the deck array) of the card that is to be drawn next
+//Integer representing the index of the next card to be drawn
 var drawnCard = null;
-//Indicates whether their is a drawn card on top of the deck, 
-//or if it's the back of the card.
+//Flag (boolean) indicating if there is a drawn card on top of the deck
 var cardIsDrawn = false;
-//Variables to save the clicked (selected) card and cell.
+
+//String containing the id of the selected card
 var selectedCard = null;
+//String containing the id of the selected cell
 var selectedCell = null;
-//Contains the deck of card.
+
+//Array of integer representing the deck of cards
 var deck = [];
-//Contains the gameboard as a matrix.
+
+//Matrix of integer containing the content of the gameboard
 var gameboardContent = [];
 
+//Integer containing the total score
 var totalScore = 0;
 
-//Returns an array containing n elements ranging from 0 to n-1
-//Takes n, an integer representing the array's length.
+///////////////////////////////////////////////////////////////////////////////
+//Functions
+///////////////////////////////////////////////////////////////////////////////
+
+//Builds the UI and initializes the global variables.
+var init = function () {
+
+    drawnCard = 0;
+    cardIsDrawn = false;
+
+    selectedCard = null;
+    selectedCell = null;
+
+    gameboardContent = squareMatrix(5, emptyCard);
+
+    //Create and shuffle a deck of 52 cards
+    deck = iota(52);
+    shuffle(deck);    
+
+    buildUI();
+};
+
+/*
+Makes a square matrix of dimension n containing value.
+Takes n, integer representing the matrix dimension
+      value, object with what is filled the matrix.
+*/
+var squareMatrix = function(n, value){
+
+    //Contains the resulting matrix, initialized with an array of n rows
+    var matrix =  Array(n).fill(0);
+
+    //Add n elements to each row
+    matrix = matrix.map(function(x){
+        return Array(n).fill(value);
+    });
+
+    return matrix;
+};
+
+/*
+Makes an array containing n elements ranging from 0 to n-1.
+Takes n, integer representing the array's length.
+*/
 var iota = function(n) {
+
     var table = Array(n).fill(n - 1).map(function(x, i){
         return x - i;
     });
+
     return table;
 
 };
 
-//Shuffles the deck of cards (in-situ)
-//Takes deck, an array representing a deck of cards.
+/*
+Shuffles the deck of card in-situ.
+Takes deck, an array.
+*/
 var shuffle = function(deck){
+
     for(var i = deck.length - 1; i > 0; i--){
-        //Get a random card from the cards among the beggining to the current index.
+
+        //Get a random card between the beggining and i
         var randI = Math.floor(Math.random() * Math.floor(i));
 
-        //Put the choosen random card to the end of the deck.
-        //so it will not be considered as a potential random card anymore.
+        //Place that card to the end of the deck, 
+        //it will not be considered to the next iteration
         deck[i] = deck.splice(randI, 1, deck[i])[0];
     }
 };
 
-//Get the card code from its id.
-//Takes id, an integer representing a card's id.
-//Returns a string representing its code.
-var codeFromId = function(id){
+/*
+Returns a string representing the code for a gameboard of dimensions 
+width * height.
+Takes height, integer.
+      width, integer.
+*/
+var buildGameboard = function(height, width){
 
-    //Special cases for some specific ids.
-    if(id == emptyCard){
-        return "empty";
-    }
-    else if(id == backCard){
-        return "back";
-    }
-
-    //Contains a string representing the value of the card (number or letter).
-    var value = getValue(id);
-    //Contains a string representing the type of the card.
-    var type = getType(id);
-
-    //For the cards described by a letter and not a number.
-    switch(value){
-        case 1: value = 'A'; break;
-        case 11: value = 'J'; break;
-        case 12: value = 'Q'; break;
-        case 13: value = 'K'; break;
-    }
-
-    //Get the type letter from the obtained number.
-    switch(type){
-        case 0: type = 'C'; break;
-        case 1: type = 'D'; break;
-        case 2: type = 'H'; break;
-        case 3: type = 'S'; break;
-    }
-
-    return value + type;
-};
-
-//Gives the numerical value of a card
-//Takes cardId, an integer representing a card's id.
-//Returns an integer representing its numerical value.
-var getValue = function(cardId){
-    return Math.floor(cardId / 4) + 1;
-};
-
-//Gives the type of a card
-//Takes cardId, an integer representing a card's id.
-//Returns an integer representing its numerical value.
-var getType = function(cardId){
-    return cardId % 4;
-};
-
-//Builds a string representing the html code of the gameboard.
-var buildGameboard = function(){
-    var boardString = "";
+    //String containing the eventual gameboard
+    var str = "";
 
     //For every row
-    for (var i = 0; i < boardHeight; i++) {
-        boardString += '<tr>';
+    for (var i = 0; i < height; i++) {
 
-        //For every cell of that row.
-        for (var j = 0; j < boardWidth; j++) {
-            //Id determined by the row and column, like in a matrix.
+        str += '<tr>';
+
+        //For every cell of that row
+        for (var j = 0; j < width; j++) {
+
+            //Id determined by the row and column, like in a matrix
             var id = ("" + (i+1)) + (j+1) + emptyCard;
 
-            //Add the cell.
-            boardString += '\
+            //Add the cell that has that id
+            str += '\
                 <td id="'+id+'" onclick="clic('+id+');">\
                     <img src="cards/'+codeFromId(emptyCard)+'.svg">\
                 </td>';
         }
 
-        //The left column representing the rows' points.
-        boardString += '<td id="'+(i+1)+(boardWidth+1)+'"></td>';
-        boardString += '</tr>';
+        //Add the left column containing the score
+        str += '<td id="'+(i+1)+(width+1)+'"></td>';
+        str += '</tr>';
     }
 
-    boardString += '<tr>';
+    str += '<tr>';
 
-    //The last row representing the columns' points.
-    for (var j = 0; j < boardWidth; j++) {
-        boardString += '<td id="'+(boardHeight+1)+(j+1)+'"></td>';
+    //Add the last row containing the score
+    for (var j = 0; j < width; j++) {
+        str += '<td id="'+(height+1)+(j+1)+'"></td>';
     }
 
-    //The score cell.
-    boardString += '<td id="score">0</td></tr>';
+    //Add the score cell containing the score
+    str += '<td id="score">0</td></tr>';
 
-    return boardString;
+    return str;
 };
 
-//Builds the UI (The new game button and the deck, then adds the gameboard).
+/*
+Builds a string representing the UI in HTML and appends it to the body.
+*/
 var buildUI = function(){
+
+    //Add the "Nouvelle partie" button, the deck cell 
+    //and the empty table for the gameboard
     document.getElementById("b").innerHTML = '\
         <table>\
             <tbody>\
@@ -159,8 +175,7 @@ var buildUI = function(){
                     </td>\
                     <td></td>\
                     <td id="'+deckCell+drawnCard+'" \
-                        onclick="clic('+deckCell+drawnCard+');" \
-                        style="background-color:'+unselectedColor+'">\
+                        onclick="clic('+deckCell+drawnCard+');"> \
                         <img src="cards/'+codeFromId(backCard)+'.svg">\
                     </td>\
                     <td></td>\
@@ -172,120 +187,208 @@ var buildUI = function(){
             <tbody id="gameboard"></tbody>\
         </table>'
 
-    document.getElementById("gameboard").innerHTML = buildGameboard();
+    //Fill the empty table with a gameboard
+    document.getElementById("gameboard").innerHTML = buildGameboard(5, 5);
 };
 
-//Called onload.
-var init = function () {
+/*
+Obtains a card's code from its id.
+Takes id, integer representing the card's id.
+Returns a string representing its code.
+*/
+var codeFromId = function(id){
 
-    //Initialize the value of the variables.
-    var selectedCard = null;
-    var selectedCell = null;
-    var cardIsDrawn = false;
+    //Special cases for empty and back card
+    if(id == emptyCard){
+        return "empty";
+    }
+    else if(id == backCard){
+        return "back";
+    }
 
-    //Make a matrix representing the gameboard's content, 
-    //filled initially with empty cards.
-    gameboardContent =  Array(boardHeight).fill(0);
-    gameboardContent = gameboardContent.map(function(x){
-        return Array(boardWidth).fill(emptyCard);
-    });
+    //String representing the value of the card
+    var value = getValue(id);
+    //String representing the type of the card
+    var type = getType(id);
 
-    //Create a deck of 52 cards.
-    deck = iota(deckLength);
+    //For the cards described by a letter and not a number
+    switch(value){
+        case 1: value = 'A'; break;
+        case 11: value = 'J'; break;
+        case 12: value = 'Q'; break;
+        case 13: value = 'K'; break;
+    }
 
-    //Shuffles it.
-    shuffle(deck);
+    //Get the type as a letter from the obtained type number
+    switch(type){
+        case 0: type = 'C'; break;
+        case 1: type = 'D'; break;
+        case 2: type = 'H'; break;
+        case 3: type = 'S'; break;
+    }
 
-    //Set the drawn card to the first.
-    drawnCard = 0;
-
-    buildUI();
+    return value + type;
 };
 
-//Ends the current game by calling init again
-///////////////////////////////////////////////////////////////////////////////
-//TO DO: display the final score
-///////////////////////////////////////////////////////////////////////////////
+/*
+Gives the numerical value of a card.
+Takes cardId, integer representing the card's id.
+Returns an integer representing its numerical value.
+*/
+var getValue = function(cardId){
+    return Math.floor(cardId / 4) + 1;
+};
+
+/*
+Gives the type of a card.
+Takes cardId, integer representing the card's id.
+Returns an integer from 0 to 3 representing its type.
+*/
+var getType = function(cardId){
+    return cardId % 4;
+};
+
+/*
+Alerts the user with its score and restarts a new game by 
+calling the init function.
+*/
 var endGame = function(){
-    window.alert("Votre pointage final est " + totalScore);
+    window.alert("Votre pointage final est- " + totalScore);
     init();
 };
 
-//Selects a cell and card according to the id and card id passed as parameters.
-//Takes cellId, a string representing the cell-to-select's id.
-//      card Id, an integer representing the id of the card in that cell.
+/*
+Returns the id of the card contained in a cell.
+Takes cellId, string that is the cell's id.
+*/
+/*
+Note that cell ids are strings of the following format:
+"3241",
+where 32 is the cell number (3rd row and 2nd column)
+and 41 is the card id (41th card of the shuffled deck).
+*/
+var getCardId = function(cellId){
+    return ("" + cellId).slice(2);
+};
+
+/*
+Returns the number of a cell.
+Takes cellId, string that is the cell's id.
+*/
+var getCellNum = function(cellId){
+    return ("" + cellId).slice(0,2);
+};
+
+/*
+Checks whether the cell is the deck of card or not.
+Takes cellId, a string representing the cell's id.
+Returns a boolean indicating if the cell is the deck's cell.
+*/
+var isDeck = function(cellId){
+    return getCellNum(cellId) == deckCell;
+};
+
+/*
+Tells whether a cell is empty or not.
+Takes cellId, a string representing the cell's id.
+Returns a boolean indicating whether the cell is empty or not.
+*/
+var isEmpty = function(cellId){
+    return getCardId(cellId) == emptyCard;
+};
+
+/*
+Selects a cell and card according to the cell id and card id parameters.
+Takes cellId, string representing the id of the cell to select.
+      cardId, string representing the id of the card to select.
+*/
 var selectCell = function(cellId, cardId){
     var cell = document.getElementById(cellId);
-    cell.style.backgroundColor = selectedColor;
+
+    //Update the background color
+    cell.style.backgroundColor = "lime";
+
     selectedCard = cardId;
     selectedCell = cellId;
 };
 
-//Unselects the current selected cell and card if they are some selected.
+/*
+If a card is selected, unselects the card.
+*/
 var unselectCell = function(){
+
     if(selectedCard != null){
+
         var cell = document.getElementById(selectedCell);
-        cell.style.backgroundColor = unselectedColor;
+
+        //Update the background color
+        cell.style.backgroundColor = "transparent";
+
         selectedCard = null;
         selectedCell = null;
     }  
 };
 
-//Get a card's id from a cell id
-//Takes cellId, a string representing the cell's id
-///////////////////////////////////////////////////////////////////////////////
-//Note that cell ids are strings of the following format:
-//
-//  3241
-//
-//  where 32 is the cell number (3rd row and 2nd column)
-//  and 41 is the card id (41th card (element) of the shuffled deck (an array))
-///////////////////////////////////////////////////////////////////////////////
-//Returns the card's id as a string
-var getCardId = function(cellId){
-    return ("" + cellId).slice(2);
+/*
+Updates a cell according to parameters.
+Takes cellId, the id of the cell to be updated.
+      newCardId, the id of the cell's new card.
+      isSelectedCell, boolean indicating if the cell 
+        will become selected after the update.
+      toggleScoreCalculation a boolean indicating if it is relevant to
+        calculate the score after the update.
+*/
+var updateCell = function(cellId, 
+                          newCardId, 
+                          isSelectedCell, 
+                          toggleScoreCalculation){
+    var cell = document.getElementById(cellId);
+
+    //Change the cell's id.
+    cell.id = getCellNum(cellId) + newCardId;
+    cellId = cell.id;
+
+    //Change the cell's onclick function.
+    cell.onclick = function(){clic(cellId);};
+
+    //Change the cell's image. (the card)
+    cell.innerHTML = '<img src="cards/'+ codeFromId(newCardId) +'.svg">';
+
+    if(isSelectedCell){
+        selectCell(cellId, newCardId);
+    }
+
+    updateGameboardContent(cellId);
+
+    if(toggleScoreCalculation){
+        calculateScore();
+    }
 };
 
-//Same logic that getCardId but to get the cell's number
-var getCellNum = function(cellId){
-    return ("" + cellId).slice(0,2);
-};
-
-//Check whether the cell specified by its id is the deck (the pile of card)
-//Takes cellId, a string representing the cell's id
-//Returns a boolean indicating if the cell is the deck's cell
-var isDeckCell = function(cellId){
-    return getCellNum(cellId) == deckCell;
-};
-
-//Tells whether a cell is empty or not.
-//Takes cellId, a string representing the cell's id.
-//Returns a boolean indicating whether the cell is empty or not.
-var isEmpty = function(cellId){
-    return getCardId(cellId) == emptyCard;
-};
-
-//Draws (display because we already know the next card) a card from the deck
-//In other words, displays the next card of the shuffled deck.
-//Takes cellId, the current cell id of the deck.
-//(since a cell's id is modified by the card the cell contains)
+/*
+Draws a card from the deck.
+Takes cellId the deck's cell id.
+*/
 var draw = function(cellId){
     var cell = document.getElementById(cellId);
     cell.innerHTML = '<img src="cards/'+ codeFromId(deck[drawnCard]) +'.svg">';
     cardIsDrawn = true;
 };
 
-//Reinitializes the deck of card to be ready to display the next card.
-//Takes cellId, the current cell id of the deck.
-//Returns the state of cardIsDrawn.
+/*
+Prepares the deck of card so it is ready to display the next card.
+Takes cellId the deck's cell id.
+Returns the state of cardIsDrawn.
+*/
 var initDeck = function(cellId){
     var cell = document.getElementById(cellId);
 
-    //The drawn card is now the next one
+    //DrawnCard is the next card.
     drawnCard++;
 
-    //Check if the drawnCard exceeds the limit of the gameboard (game is over)
-    if(drawnCard >= boardWidth * boardHeight){
+    //Check if the drawn card exceeds the gameboard's capacity.
+    //(game over)
+    if(drawnCard >= 25){
         cell.innerHTML = '<img src="cards/'+codeFromId(emptyCard)+'.svg">';
         cardIsDrawn = true;
     }
@@ -297,65 +400,42 @@ var initDeck = function(cellId){
     return cardIsDrawn;
 };
 
-//Updates a cell according the the parameters described below:
-//Takes cellId, the cell-to-be-updated's id.
-//      newCardId, the new-card-to-be-displayed's id.
-//      isSelectedCell, a boolean indicating if the cell has 
-//          to be selected after update.
-//      toggleScoreCalculation, a boolean indicating if it is relevant to
-//          calculate the score after update.
-var updateCell = function(cellId, newCardId, isSelectedCell, toggleScoreCalculation){
-    //Update the cell
-    var cell = document.getElementById(cellId);
-    cell.id = getCellNum(cellId) + newCardId;
-    cellId = cell.id;
-    cell.onclick = function(){clic(cellId);};
-    cell.innerHTML = '<img src="cards/'+ codeFromId(newCardId) +'.svg">';
-
-    if(isSelectedCell){
-        selectCell(cellId, newCardId);
-    }
-
-    //Update the score
-    updateScore(cellId);
-
-    if(toggleScoreCalculation){
-        calculateScore();
-    }
-};
-
-//Manages the click of a cell.
-//Takes cellId, the clicked cell's id.
-///////////////////////////////////////////////////////////////////////////////
-//TO DO: make sure it behaves exactly as the professor's program.
-///////////////////////////////////////////////////////////////////////////////
+/*
+Manages the click of a cell.
+Takes cellId, the clicked cell's id.
+*/
 var clic = function(cellId){
-    //If it is the deck
-    if(isDeckCell(cellId)){
-        //If we have a card in hand
-        if(selectedCard != null){
-            //Cancel the card selection
-            unselectCell();
+
+    //If the clicked cell is the deck
+    if(isDeck(cellId)){
+
+        //Keep a backup of the previously selected cell
+        var bkp = selectedCell;
+
+        unselectCell();
+
+        //Draw a card if needed
+        if(!cardIsDrawn){
+            draw(cellId);
         }
-        //Otherwise if we have no card in hand
-        else {
-            //if the cell is not displaying any drawn card, draw one
-            if(!cardIsDrawn){
-                draw(cellId);
-            }
+
+        //Select the card on top of the deck if it is not already
+        //selected or if we have no card in hand
+        if(bkp == null || !isDeck(bkp)){
+
             //Select the card on top of the deck
             selectCell(cellId, deck[drawnCard]);
         }
     }
-    //If we have no card in hand and we are not clicking on the deck
-    else if(selectedCard == null){
+    //Clicking on a non-empty gameboard cell without any selected card in hand
+    else if(selectedCard == null && !isEmpty(cellId)){
+
         //Select the cell that is clicked
         selectCell(cellId, getCardId(cellId));
     }
-    //Otherwise, if we have a card in hand and we are not clicking on the deck
     else{
-        //if the card we have is from the deck and the cell we click is empty
-        if(isDeckCell(selectedCell) && isEmpty(cellId)){
+        //Taking a card from the deck to an empty cell
+        if(isDeck(selectedCell) && isEmpty(cellId)){
 
             //Insert the card in the clicked cell and make sure 
             //it is still not the end of the game
@@ -366,16 +446,14 @@ var clic = function(cellId){
                 endGame();
             }
         }
-        //if the card we have is from the deck 
-        //and the cell we click is NOT empty
-        else if(isDeckCell(selectedCell)){
+        //Taking a card from the deck to a non-empty cell
+        else if(isDeck(selectedCell)){
             //Take in hand the card of the clicked cell instead
             unselectCell();
             selectCell(cellId, getCardId(cellId));
         }
-        //if the card we have is NOT from the deck 
-        //and the cell we click is NOT empty
-        else{
+        //Exchanging two cards
+        else if(selectedCell != null && !isEmpty(selectedCell)){
             //Exchange the card in hand with the one we are clicking on
             var cardId = getCardId(cellId);//keep a backup
             updateCell(cellId, selectedCard);
@@ -385,17 +463,25 @@ var clic = function(cellId){
     }
 };
 
+/*
+Updates the gameboardContent matrix with a new cell.
+Takes cellId, the id of the new cell.
+*/
+var updateGameboardContent = function(cellId){
+    var cell = document.getElementById(cellId);
+
+    //Get the cell's information
+    var cellNum = getCellNum(cellId);
+    var cardId = +getCardId(cellId);
+
+    //Update the right cell with the right card.
+    gameboardContent[cellNum[0] - 1][cellNum[1] - 1] = cardId;
+};
+
 ///////////////////////////////////////////////////////////////////////////////
 //TO DO: comment that section
 //       refine it
 ///////////////////////////////////////////////////////////////////////////////
-
-var updateScore = function(cellId, calculateScore){
-    var cell = document.getElementById(cellId);
-    var cellNum = getCellNum(cellId);
-    var cardId = +getCardId(cellId);
-    gameboardContent[cellNum[0] - 1][cellNum[1] - 1] = cardId;
-};
 
 var calculateScore = function(){
     totalScore = 0;
@@ -450,6 +536,7 @@ var handScore = function(hand){
 };
 
 var quinteFlush = function(cards, types){
+    var score = 0;
     trier(cards);
     var streak = 1;
     var royale = cards[0] == 1 && cards[cards.length - 1] == 13;
@@ -464,18 +551,18 @@ var quinteFlush = function(cards, types){
     }
     var isFlush = flush(types) == 20;
     if(streak == 5 && isFlush && royale){
-        return 100;
+        score = 100;
     }
     if(streak == 5 && isFlush){
-        return 75;
+        score = 75;
     }
     if(isFlush){
-        return 20;
+        score = 20;
     }
     if(streak == 5){
-        return 15;
+        score =  15;
     }
-    return 0;
+    return score;
 };
 
 var flush = function(cards){
@@ -527,22 +614,23 @@ var fullHouseAndLess = function(cards, result){
 }
 
 var evaluate = function(result){
-    if(result == "4"){
-        return 50;
+    var score = 0;
+    if(result == "4"){//CARRE
+        score = 50;
     }
     else if(result == "32" || result == "23"){//FULL HOUSE
-        return 25;
+        score = 25;
     }
     else if(result == "3"){//BRELAN
-        return 10;
+        score = 10;
     }
     else if(result == "22"){//DOUBLE PAIR
-        return 5;
+        score = 5;
     }
     else if(result == "2"){//PAIR
-        return 2;
+        score = 2;
     }
-    return 0;
+    return score;
 };
 
 var copy = function(array){
@@ -579,6 +667,10 @@ var typesFrom = function(cards){
     return types;
 };
 
+///////////////////////////////////////////////////////////////////////////////
+//Tests
+///////////////////////////////////////////////////////////////////////////////
+
 var testHands = function(){
     console.log(handScore([ 2, 37, 31, 44, 23 ]) == 0);  //Nothing
 
@@ -604,11 +696,10 @@ var testHands = function(){
     console.log(handScore([ 6, 7, 17, 43, 28 ]) == 2);//Paire
 };
 
-
-
+///////////////////////////////////////////////////////////////////////////////
 //Extrait des notes de cours de Monsieur Marc Feeley, 
-//du cours IFT1015 à la session d'hiver 2020
-///////////////////////////////////////////////////////////////////////
+//du cours IFT1015 à la session d'hiver 2020.
+///////////////////////////////////////////////////////////////////////////////
 
 // Procédure qui trie un tableau en ordre croissant in-situ
 
@@ -636,9 +727,8 @@ var positionMin = function (t, debut) {
     return posMin;
 };
 
-///////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
 
-//testHands();
 
 
 
