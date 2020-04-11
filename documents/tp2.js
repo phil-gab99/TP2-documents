@@ -448,12 +448,14 @@ var clic = function(cellId){
         }
         //Taking a card from the deck to a non-empty cell
         else if(isDeck(selectedCell)){
+            
             //Take in hand the card of the clicked cell instead
             unselectCell();
             selectCell(cellId, getCardId(cellId));
         }
         //Exchanging two cards
         else if(selectedCell != null && !isEmpty(selectedCell)){
+
             //Exchange the card in hand with the one we are clicking on
             var cardId = getCardId(cellId);//keep a backup
             updateCell(cellId, selectedCard);
