@@ -1,10 +1,3 @@
-/*
-TODO
-    Unit tests.
-    Make sure it behaves like the professor's.
-    Comment the score calculation logic.
-*/
-
 ///////////////////////////////////////////////////////////////////////////////
 //Constants
 ///////////////////////////////////////////////////////////////////////////////
@@ -448,7 +441,7 @@ var clic = function(cellId){
         }
         //Taking a card from the deck to a non-empty cell
         else if(isDeck(selectedCell)){
-            
+
             //Take in hand the card of the clicked cell instead
             unselectCell();
             selectCell(cellId, getCardId(cellId));
@@ -485,48 +478,72 @@ var updateGameboardContent = function(cellId){
 //       refine it
 ///////////////////////////////////////////////////////////////////////////////
 
+/*
+Calculates the score and updates the UI according to it.
+*/
 var calculateScore = function(){
+
     totalScore = 0;
+
+    //Calculate the score of every row
     gameboardContent.forEach(function(hand, i){
-        var score = handScore(hand);
-        totalScore += +score;
+
+        totalScore += handScore(hand);
+
         var cellId = i + 1 + "6";
         document.getElementById(cellId).innerHTML = score;
     });
+
+    //Calculate the score of every column
     transpose(gameboardContent).forEach(function(hand, i){
-        var score = handScore(hand);
-        totalScore += +score;
+
+        totalScore += handScore(hand);
+
         var cellId = "6" + (i + 1);
         document.getElementById(cellId).innerHTML = score;
     });
+
     document.getElementById("score").innerHTML = totalScore;
 };
 
+/*
+Gives the transposed matrix of the matrix specified in the parameters.
+Takes matrix, the matrix to transpose.
+Returns the transposed matrix of matrix.
+*/
 var transpose = function(matrix){
-    var matrixT = Array(matrix[0].length).fill(0);
-    matrixT = matrixT.map(function(x){
-        return Array(matrix.length).fill(emptyCard);
-    });
+
+    var matrixT = squareMatrix(matrix[0].length, 0);
+
+    //Put the tranposed content of matrix into matrixT
     for(var i = 0; i < matrix.length; i++){
         for(var j = 0; j < matrix[i].length; j++){
             matrixT[j][i] = matrix[i][j];
         }
     }
+
     return matrixT;
 };
 
+/*
+Gives the score of a given poker hand.
+Takes hand, an array of integer representing a hand of five cards.
+Returns the score of that hand as string.
+*/
 var handScore = function(hand){
-    var result = 0;
+
+    //Contains the hand's score
     var score = 0;
 
+    
     var values = valuesFrom(hand);
     var types = typesFrom(hand);
 
     var cpy = copy(values);
     removeEmpty(cpy);
-    score = evaluate(fullHouseAndLess(cpy, ""));
+    score = evaluate(fullHouse(cpy, ""));
 
-    result = quinteFlush(values, types);
+    var result = quinteFlush(values, types);
     if(result > score){
         score = result;
     }
@@ -534,7 +551,7 @@ var handScore = function(hand){
     if(score <= 0){
         score = "";
     }
-    return score;
+    return +score;
 };
 
 var quinteFlush = function(cards, types){
@@ -581,7 +598,7 @@ var flush = function(cards){
     return 0;
 };
 
-var fullHouseAndLess = function(cards, result){
+var fullHouse = function(cards, result){
     let first = cards.shift();
     let i = cards.indexOf(first);
     let j = -1;
@@ -617,19 +634,19 @@ var fullHouseAndLess = function(cards, result){
 
 var evaluate = function(result){
     var score = 0;
-    if(result == "4"){//CARRE
+    if(result == "4"){//Carre
         score = 50;
     }
-    else if(result == "32" || result == "23"){//FULL HOUSE
+    else if(result == "32" || result == "23"){//Full house
         score = 25;
     }
-    else if(result == "3"){//BRELAN
+    else if(result == "3"){//Brelan
         score = 10;
     }
-    else if(result == "22"){//DOUBLE PAIR
+    else if(result == "22"){//Double paire
         score = 5;
     }
-    else if(result == "2"){//PAIR
+    else if(result == "2"){//Paire
         score = 2;
     }
     return score;
@@ -693,9 +710,9 @@ var testHands = function(){
 
     console.log(handScore([ 6, 7, 17, 5, 28 ]) == 10);   //Brelan
 
-    console.log(handScore([ 6, 7, 17, 19, 28 ]) == 5);//Double paire
+    console.log(handScore([ 6, 7, 17, 19, 28 ]) == 5);   //Double paire
 
-    console.log(handScore([ 6, 7, 17, 43, 28 ]) == 2);//Paire
+    console.log(handScore([ 6, 7, 17, 43, 28 ]) == 2);   //Paire
 };
 
 ///////////////////////////////////////////////////////////////////////////////
