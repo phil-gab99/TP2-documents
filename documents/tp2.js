@@ -11,9 +11,8 @@
 
 // TODO: Unit tests for getCardNum and calScore
 // TODO: Play the game to find bugs if any
-// TODO: Prevent final alert message to display before content loaded
-    //Issue fixed using setTimeout() method, wait for further instructions
 // OPTIMIZE: calScore function for each hand combination, wait for instructions
+    // IDEA: The removeEmpty(hand) is good start for minimizing calculations
 
 var mixDeck = []; //Array of randomly ordered cards in an integer encoding
 var currCard = 0; //Index indicating the next card to be flipped from pile
@@ -171,6 +170,27 @@ var getCol = function(mat, col) {
     );
 
     return column;
+};
+
+/*
+* The removeEmpty function removes the empty cells of a sorted hand array so as
+* to lead a desired analysis on the cards only
+*
+* @param hand Array describing the present cards including empty cells
+* @return handCards Array describing the present cards excluding empty cells
+**/
+
+var removeEmpty = function(hand) {
+
+    var handCards = hand.slice();
+
+    var emptyCell = handCards.indexOf(52); //Retrieving empty cell position
+
+    if (emptyCell != -1) {
+        handCards.splice(emptyCell);
+    }
+
+    return handCards;
 };
 
 /*
@@ -597,7 +617,17 @@ var calScore = function(hand) {
         return comb;
     };
 
-    //Scores are assigned with respect to the ranking of the hand combination
+    // //Scores are assigned with respect to the ranking of the hand combination
+    // if (hand.length < 5) {
+    //
+    // } else if (hand.length < 4) {
+    //
+    // } else if (hand.length < 3) {
+    //
+    // } else {
+    //
+    // }
+
     if (quinteFlushRoyale()) return score; else comb = true; score = 75;
     if (quinteFlush())       return score; else comb = true; score = 50;
     if (fourOfAKind())       return score; else comb = true; score = 25;
@@ -660,16 +690,22 @@ var scoreSystem = function() {
 
 var clic = function(id) {
 
-    //Contents of selected cell
-    var cell = document.getElementById(id).innerHTML;
-
     //Retrieving positions on grid of deck cell and previously selected cell
     var deckCell   = clickState.length - 1;
     var activeCell = clickState.indexOf(true);
 
-    //Retrieving selected cell's and active cell's coordinates on grid
+    //Currently selected card and its coordinates
+    var card = document.getElementById(id);
     var coords = indexToCoords(id);
-    if (activeCell != -1) var preCoords = indexToCoords(activeCell);
+
+    //Previously selected card and its coordinates
+    if (activeCell != -1) {
+        var preCard = document.getElementById(activeCell);
+        var preCoords = indexToCoords(activeCell);
+    }
+
+    //Deck pile
+    var deckPile = document.getElementById(deckCell);
 
     //File paths for each card state
     var back     = '<img src="cards/back.svg">';
@@ -683,39 +719,39 @@ var clic = function(id) {
     var slct  = 'lime';        //Cell color for a selected card
     var dslct = 'transparent'; //Cell color for a non-selected card
 
-    if (cell == back) { //Face-down deck pile selected
+    if (card.innerHTML == back) { //Face-down deck pile selected
 
         if (activeCell != -1) { //Checking for other selected cards
-            document.getElementById(activeCell).style.backgroundColor = dslct;
+            preCard.style.backgroundColor = dslct;
             clickState[activeCell] = false;
         }
 
-        document.getElementById(id).innerHTML = deckCard;
-        document.getElementById(id).style.backgroundColor = slct;
+        card.innerHTML = deckCard;
+        card.style.backgroundColor = slct;
         clickState[id] = true;
 
-    } else if (cell == empty){ //Empty cell grid selected
+    } else if (card.innerHTML == empty){ //Empty cell grid selected
 
         if (activeCell == deckCell) {
 
             //Placing card from deck pile onto grid
-            document.getElementById(id).innerHTML = deckCard;
-            document.getElementById(deckCell).innerHTML = back;
+            card.innerHTML = deckCard;
+            deckPile.innerHTML = back;
             boardState[coords.row][coords.col] = mixDeck[currCard++];
 
-            document.getElementById(deckCell).style.backgroundColor = dslct;
+            deckPile.style.backgroundColor = dslct;
             clickState[deckCell] = false;
 
         } else if (activeCell != -1) { //Previously selected card within grid
 
             //Moving card within grid onto different empty grid space
-            boardCard = document.getElementById(activeCell).innerHTML;
-            document.getElementById(id).innerHTML = boardCard;
-            document.getElementById(activeCell).innerHTML = empty;
+            boardCard = preCard.innerHTML;
+            card.innerHTML = boardCard;
+            preCard.innerHTML = empty;
             boardState[coords.row][coords.col] = getCardNum(boardCard);
             boardState[preCoords.row][preCoords.col] = 52;
 
-            document.getElementById(activeCell).style.backgroundColor = dslct;
+            preCard.style.backgroundColor = dslct;
             clickState[activeCell] = false;
         }
 
@@ -724,14 +760,14 @@ var clic = function(id) {
         if (activeCell == id) {
 
             //Selecting the same previously selected card deselects it
-            document.getElementById(id).style.backgroundColor = dslct;
+            card.style.backgroundColor = dslct;
             clickState[id] = false;
 
         } else if (activeCell == deckCell) { //Previously selected deck pile
 
             //Prevent moving card from deck pile unto occupied grid space
-            document.getElementById(deckCell).style.backgroundColor = dslct;
-            document.getElementById(id).style.backgroundColor = slct;
+            deckPile.style.backgroundColor = dslct;
+            card.style.backgroundColor = slct;
             clickState[deckCell] = false;
             clickState[id] = true;
 
@@ -740,30 +776,28 @@ var clic = function(id) {
             if (id == deckCell) {
 
                 //Prevent moving card from grid unto deck pile
-                document.getElementById(activeCell).style.backgroundColor
-                = dslct;
-                document.getElementById(id).style.backgroundColor = slct;
+                preCard.style.backgroundColor = dslct;
+                card.style.backgroundColor = slct;
                 clickState[activeCell] = false;
                 clickState[id] = true;
 
             } else {
 
                 //Exchanging two cards' positions on the grid
-                boardCard = document.getElementById(activeCell).innerHTML;
-                temp = document.getElementById(id).innerHTML;
-                document.getElementById(id).innerHTML = boardCard;
-                document.getElementById(activeCell).innerHTML = temp;
+                boardCard = preCard.innerHTML;
+                temp = card.innerHTML;
+                card.innerHTML = boardCard;
+                preCard.innerHTML = temp;
                 boardState[coords.row][coords.col] = getCardNum(boardCard);
                 boardState[preCoords.row][preCoords.col] = getCardNum(temp);
 
-                document.getElementById(activeCell).style.backgroundColor
-                = dslct;
+                preCard.style.backgroundColor = dslct;
                 clickState[activeCell] = false;
 
             }
 
         } else { //No previously selected cards
-            document.getElementById(id).style.backgroundColor = slct;
+            card.style.backgroundColor = slct;
             clickState[id] = true;
         }
     }
