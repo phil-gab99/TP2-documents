@@ -105,18 +105,18 @@ http.createServer(function (requete, reponse) {
 
 // Modifiez cette fonction uniquement.
 
-var traiterCSV = function (doc) {
-
-    return "<table border=\"1\" style=\"border-collapse: collapse;\">"
-           + " <tr>"
-           + "  <td>ce</td>"
-           + "  <td>code</td>"
-           + " </tr>"
-           + " <tr>"
-           + "  <td>est</td>"
-           + "  <td>incomplet</td>"
-           + " </tr>"
-           + "</table>";
-};
+// var traiterCSV = function (doc) {
+//
+//     return "<table border=\"1\" style=\"border-collapse: collapse;\">"
+//            + " <tr>"
+//            + "  <td>ce</td>"
+//            + "  <td>code</td>"
+//            + " </tr>"
+//            + " <tr>"
+//            + "  <td>est</td>"
+//            + "  <td>incomplet</td>"
+//            + " </tr>"
+//            + "</table>";
+// };
 
 //-----------------------------------------------------------------------------

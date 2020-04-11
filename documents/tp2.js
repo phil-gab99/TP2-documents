@@ -12,6 +12,8 @@
 // TODO: Unit tests
 // TODO: Play the game to find bugs if any
 // TODO: Prevent final alert message to display before content loaded
+    //Issue fixed using setTimeout() method, wait for further instructions
+// OPTIMIZE: calScore function for each hand combination, wait for instructions
 
 var mixDeck = []; //Array of randomly ordered cards in an integer encoding
 var currCard = 0; //Index indicating the next card to be flipped from pile
@@ -262,8 +264,8 @@ var getCardNum = function(cardPath) {
 * @return score Integer representing the score of the hand
 **/
 
-//Same suit --> x & 3  == y & 3
-//Same rank --> x >> 2 == y >> 2
+//Same suit --> (x & 3)  == (y & 3)
+//Same rank --> (x >> 2) == (y >> 2)
 // NOTE: Consider forEach, check teacher's answer on matter
 
 var calScore = function(hand) {
@@ -618,8 +620,10 @@ var scoreSystem = function() {
     document.getElementById('T').innerHTML = tScore;
 
     if (filled) {
-        alert("Votre pointage final est " + tScore);
-        init();
+        setTimeout(function() { //Wait until content is loaded before pop-up
+            alert("Votre pointage final est " + tScore);
+            init();
+        }, 10)
     }
 };
 
