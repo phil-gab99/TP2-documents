@@ -9,7 +9,7 @@
 * how the main grid is filled
 **/
 
-// TODO: Unit tests
+// TODO: Unit tests for getCardNum and calScore
 // TODO: Play the game to find bugs if any
 // TODO: Prevent final alert message to display before content loaded
     //Issue fixed using setTimeout() method, wait for further instructions
@@ -19,8 +19,8 @@ var mixDeck = []; //Array of randomly ordered cards in an integer encoding
 var currCard = 0; //Index indicating the next card to be flipped from pile
 
 //Dimensions determining size of playable grid
-var rowsNum = 0;
-var colsNum = 0;
+var rowsNum = 5;
+var colsNum = 5;
 
 var boardState = [[]]; //Matrix of integers indicating occupied cells in grid
 var clickState = [];   //Array of booleans indicating when cell is clicked
@@ -75,12 +75,13 @@ var shuffle = function(deck) {
             return temp;
         }
     );
-    return shuffledDeck;
+    //Final deck consisting of as many cards as cells on grid
+    return shuffledDeck.slice(0, rowsNum * colsNum);
 };
 
 /*
-* The merge function is reponsible for merging two given arrays into a single
-* ascendingly sorted array
+* The merge function is reponsible for merging two given ascendingly sorted
+* arrays into a single single ascendingly sorted array
 *
 * @param tab1 The first array to be merged
 * @param tab2 The second array to be merged
@@ -177,16 +178,16 @@ var getCol = function(mat, col) {
 * based on an integer encoding of the cards as well as the reached current card
 * in the shuffled deck pile
 *
+* @param cardNum Integer representing the card encoding
 * @return cardName String indicating the file name of the correct image file
-* corresponding with the next card in the shuffled deck pile
 **/
 
-var getCardName = function() {
+var getCardName = function(cardNum) {
 
     var cardName = "";
 
     //Determining the card's rank
-    switch ((mixDeck[currCard] >> 2)) {
+    switch (cardNum >> 2) {
         case 0 : cardName += "A";  break;
         case 1 : cardName += "2";  break;
         case 2 : cardName += "3";  break;
@@ -200,10 +201,14 @@ var getCardName = function() {
         case 10: cardName += "J";  break;
         case 11: cardName += "Q";  break;
         case 12: cardName += "K";  break;
+        default:
+            cardName = (cardNum == 52) ? "empty" : "back";
+            return cardName;
+
     }
 
     //Determining the card's suit
-    switch (mixDeck[currCard] & 3) {
+    switch (cardNum & 3) {
         case 0: cardName += "C"; break;
         case 1: cardName += "S"; break;
         case 2: cardName += "H"; break;
@@ -243,6 +248,9 @@ var getCardNum = function(cardPath) {
         case "J" : cardNum = 40; break;
         case "Q" : cardNum = 44; break;
         case "K" : cardNum = 48; break;
+        default  :
+            cardNum = (cardName == "empty") ? 52 : 53;
+            return cardNum;
     }
 
     //Determining the card's suit
@@ -462,15 +470,30 @@ var calScore = function(hand) {
 
             if (card >> 2 == 0) { //First card Ace has two valid combinations
 
-                for (var i = 1; i < hand.length; i++) {
+                if (hand[1] >> 2 == 1) {
 
-                    //Conditions for breaking both valid Quinte combinations
-                    if ((hand[i] >> 2 != 8 + i) && (hand[i] >> 2 != i)) {
+                    for (var i = 2; i < hand.length; i++) {
 
-                        comb = false;
-                        break;
+                        //Condition for breaking first valid Quinte combination
+                        if (hand[i] >> 2 != i) {
+
+                            comb = false;
+                            break;
+                        }
+                    }
+                } else {
+
+                    for (var i = 1; i < hand.length; i++) {
+
+                        //Condition for breaking the special Quinte combination
+                        if (hand[i] >> 2 != 8 + i) {
+
+                            comb = false;
+                            break;
+                        }
                     }
                 }
+
             } else {
 
                 for (var i = 1; i < hand.length; i++) {
@@ -649,9 +672,10 @@ var clic = function(id) {
     if (activeCell != -1) var preCoords = indexToCoords(activeCell);
 
     //File paths for each card state
-    var back      = '<img src="cards/back.svg">';
-    var empty     = '<img src="cards/empty.svg">';
-    var deckCard  = '<img src="cards/'+ getCardName() +'.svg">'; //Card in pile
+    var back     = '<img src="cards/back.svg">';
+    var empty    = '<img src="cards/empty.svg">';
+    var deckCard =
+    '<img src="cards/' + getCardName(mixDeck[currCard]) + '.svg">';
 
     var boardCard = ''; //Card name of previously selected card on grid
     var temp      = ''; //Temporary card name for exchanging cards
@@ -677,9 +701,8 @@ var clic = function(id) {
             //Placing card from deck pile onto grid
             document.getElementById(id).innerHTML = deckCard;
             document.getElementById(deckCell).innerHTML = back;
-            boardState[coords.row][coords.col] = getCardNum(deckCard);
+            boardState[coords.row][coords.col] = mixDeck[currCard++];
 
-            currCard ++; //Next card of deck pile is set
             document.getElementById(deckCell).style.backgroundColor = dslct;
             clickState[deckCell] = false;
 
@@ -821,9 +844,6 @@ var init = function() {
     var deckSize = 52; //Integer indicating size of deck of cards
     currCard = 0;      //Initializing deck pile at first card
 
-    rowsNum = 5;
-    colsNum = 5;
-
     mixDeck = shuffle(iota(deckSize));
 
     //Cards on grid empty by default in matrix format
@@ -845,9 +865,179 @@ var init = function() {
 **/
 
 var testIota = function() {
-    assert(iota(4)     == "0,1,2,3");
-    assert(iota(0)     == "");
-    assert(iota(1)     == "0");
-    assert(iota(-1)    == "");
-    assert(iota("abc") == "");
+    console.assert(iota(4)     == "3,2,1,0");
+    console.assert(iota(0)     == "");
+    console.assert(iota(1)     == "0");
+    console.assert(iota(-1)    == "");
+    console.assert(iota("abc") == "");
 };
+
+var testMerge = function() {
+    console.assert(merge([0,1,2,3],[4,5,6,7])         == "0,1,2,3,4,5,6,7");
+    console.assert(merge([3,2,1,0],[7,6,5,4])         == "3,2,1,0,7,6,5,4");
+    console.assert(merge([0,4,6,7],[1,2,3,5])         == "0,1,2,3,4,5,6,7");
+    console.assert(merge([6,2,4,0],[5,7,1,3])         == "5,6,2,4,0,7,1,3");
+    console.assert(merge([7],[0,1,2,3,4,5,6])         == "0,1,2,3,4,5,6,7");
+    console.assert(merge([0,1,2,3,4,5,6],[7])         == "0,1,2,3,4,5,6,7");
+    console.assert(merge([4,0],[6,2,1,5,7,3])         == "4,0,6,2,1,5,7,3");
+    console.assert(merge([6,2,1,5,7,3],[4,0])         == "4,0,6,2,1,5,7,3");
+    console.assert(merge([0,0,1,1],[0,0,2,2])         == "0,0,0,0,1,1,2,2");
+    console.assert(merge([1,2,0,1],[2,2,2,2])         == "1,2,2,2,2,2,0,1");
+    console.assert(merge([7,2],[2,2,7,7,0,0])         == "2,2,7,7,0,0,7,2");
+    console.assert(merge([2,2,7,7,0,0],[7,2])         == "2,2,7,2,7,7,0,0");
+    console.assert(merge([],[0,1,2,3,4,5,6,7])        == "0,1,2,3,4,5,6,7");
+    console.assert(merge([0,1,2,3,4,5,6,7],[])        == "0,1,2,3,4,5,6,7");
+    console.assert(merge([],[6,0,2,1,5,7,4,3])        == "6,0,2,1,5,7,4,3");
+    console.assert(merge([6,0,2,1,5,7,4,3],[])        == "6,0,2,1,5,7,4,3");
+    console.assert(merge([],[])                       == "");
+    console.assert(merge(['a','b','c'],['d','e','f']) == "a,b,c,d,e,f");
+    console.assert(merge(['c','a','b'],['f','d','e']) == "c,a,b,f,d,e");
+    console.assert(merge(['b','f','a'],['e','d','c']) == "b,e,d,c,f,a");
+    console.assert(merge(['c'],['a','b','d','e','f']) == "a,b,c,d,e,f");
+    console.assert(merge(['a','b','d','e','f'],['c']) == "a,b,c,d,e,f");
+    console.assert(merge(['d','a'],['c','f','b','e']) == "c,d,a,f,b,e");
+    console.assert(merge(['c','f','b','e'],['d','a']) == "c,d,a,f,b,e");
+    console.assert(merge(['a','a','b'],['b','b','a']) == "a,a,b,b,a,b");
+    console.assert(merge(['b','b','a'],['a','a','b']) == "a,a,b,b,b,a");
+    console.assert(merge(['c','c'],['a','c','b','e']) == "a,c,b,c,c,e");
+    console.assert(merge(['a','c','b','e'],['c','c']) == "a,c,c,c,b,e");
+    console.assert(merge([''],['a','b','c'])          == ",a,b,c");
+    console.assert(merge(['a','b','c'],[''])          == ",a,b,c");
+    console.assert(merge([''],['b','c','a'])          == ",b,c,a");
+    console.assert(merge(['b','c','a'],[''])          == ",b,c,a");
+    console.assert(merge(['A','B','C'],['D','E','F']) == "A,B,C,D,E,F");
+    console.assert(merge(['C','A','B'],['F','D','E']) == "C,A,B,F,D,E");
+    console.assert(merge(['B','F','A'],['E','D','C']) == "B,E,D,C,F,A");
+    console.assert(merge(['C'],['A','B','D','E','F']) == "A,B,C,D,E,F");
+    console.assert(merge(['A','B','D','E','F'],['C']) == "A,B,C,D,E,F");
+    console.assert(merge(['D','A'],['C','F','B','E']) == "C,D,A,F,B,E");
+    console.assert(merge(['C','F','B','E'],['D','A']) == "C,D,A,F,B,E");
+    console.assert(merge(['A','A','B'],['B','B','A']) == "A,A,B,B,A,B");
+    console.assert(merge(['B','B','A'],['A','A','B']) == "A,A,B,B,B,A");
+    console.assert(merge(['C','C'],['A','C','B','E']) == "A,C,B,C,C,E");
+    console.assert(merge(['A','C','B','E'],['C','C']) == "A,C,C,C,B,E");
+    console.assert(merge([''],['A','B','C'])          == ",A,B,C");
+    console.assert(merge(['A','B','C'],[''])          == ",A,B,C");
+    console.assert(merge([''],['B','C','A'])          == ",B,C,A");
+    console.assert(merge(['B','C','A'],[''])          == ",B,C,A");
+    console.assert(merge([''],[''])                   == ",");
+};
+
+var testSort = function() {
+    console.assert(sort([0,1,2,3,4,5,6,7])         == "0,1,2,3,4,5,6,7");
+    console.assert(sort([3,2,1,0,7,6,5,4])         == "0,1,2,3,4,5,6,7");
+    console.assert(sort([0,4,6,7,1,2,3,5])         == "0,1,2,3,4,5,6,7");
+    console.assert(sort([6,2,4,0,5,7,1,3])         == "0,1,2,3,4,5,6,7");
+    console.assert(sort([7,0,1,2,3,4,5,6])         == "0,1,2,3,4,5,6,7");
+    console.assert(sort([4,0,6,2,1,5,7,3])         == "0,1,2,3,4,5,6,7");
+    console.assert(sort([6,2,1,5,7,3,4,0])         == "0,1,2,3,4,5,6,7");
+    console.assert(sort([0,0,1,1,0,0,2,2])         == "0,0,0,0,1,1,2,2");
+    console.assert(sort([1,2,0,1,2,2,2,2])         == "0,1,1,2,2,2,2,2");
+    console.assert(sort([7,2,2,2,7,7,0,0])         == "0,0,2,2,2,7,7,7");
+    console.assert(sort([2,2,7,7,0,0,7,2])         == "0,0,2,2,2,7,7,7");
+    console.assert(sort([2,1])                     == "1,2");
+    console.assert(sort([1,2])                     == "1,2");
+    console.assert(sort([1])                       == "1");
+    console.assert(sort([])                        == "");
+    console.assert(sort(['a','b','c','d','e','f']) == "a,b,c,d,e,f");
+    console.assert(sort(['c','a','b','f','d','e']) == "a,b,c,d,e,f");
+    console.assert(sort(['b','f','a','e','d','c']) == "a,b,c,d,e,f");
+    console.assert(sort(['c','a','b','d','e','f']) == "a,b,c,d,e,f");
+    console.assert(sort(['a','b','d','e','f','c']) == "a,b,c,d,e,f");
+    console.assert(sort(['d','a','c','f','b','e']) == "a,b,c,d,e,f");
+    console.assert(sort(['c','f','b','e','d','a']) == "a,b,c,d,e,f");
+    console.assert(sort(['a','a','b','b','b','a']) == "a,a,a,b,b,b");
+    console.assert(sort(['b','b','a','a','a','b']) == "a,a,a,b,b,b");
+    console.assert(sort(['c','c','a','c','b','e']) == "a,b,c,c,c,e");
+    console.assert(sort(['a','c','b','e','c','c']) == "a,b,c,c,c,e");
+    console.assert(sort(['','a','b','c'])          == ",a,b,c");
+    console.assert(sort(['a','b','c',''])          == ",a,b,c");
+    console.assert(sort(['','b','c','a'])          == ",a,b,c");
+    console.assert(sort(['b','c','a',''])          == ",a,b,c");
+    console.assert(sort(['A','B','C','D','E','F']) == "A,B,C,D,E,F");
+    console.assert(sort(['C','A','B','F','D','E']) == "A,B,C,D,E,F");
+    console.assert(sort(['B','F','A','E','D','C']) == "A,B,C,D,E,F");
+    console.assert(sort(['C','A','B','D','E','F']) == "A,B,C,D,E,F");
+    console.assert(sort(['A','B','D','E','F','C']) == "A,B,C,D,E,F");
+    console.assert(sort(['D','A','C','F','B','E']) == "A,B,C,D,E,F");
+    console.assert(sort(['C','F','B','E','D','A']) == "A,B,C,D,E,F");
+    console.assert(sort(['A','A','B','B','B','A']) == "A,A,A,B,B,B");
+    console.assert(sort(['B','B','A','A','A','B']) == "A,A,A,B,B,B");
+    console.assert(sort(['C','C','A','C','B','E']) == "A,B,C,C,C,E");
+    console.assert(sort(['A','C','B','E','C','C']) == "A,B,C,C,C,E");
+    console.assert(sort(['','A','B','C'])          == ",A,B,C");
+    console.assert(sort(['A','B','C',''])          == ",A,B,C");
+    console.assert(sort(['','B','C','A'])          == ",A,B,C");
+    console.assert(sort(['B','C','A',''])          == ",A,B,C");
+    console.assert(sort([''])                      == "")
+};
+
+var testIndexToCoords = function() {
+    console.assert([indexToCoords(0).row, indexToCoords(0).col]   == "0,0");
+    console.assert([indexToCoords(7).row, indexToCoords(7).col]   == "1,2");
+    console.assert([indexToCoords(11).row, indexToCoords(11).col] == "2,1");
+    console.assert([indexToCoords(13).row, indexToCoords(13).col] == "2,3");
+    console.assert([indexToCoords(17).row, indexToCoords(17).col] == "3,2");
+    console.assert([indexToCoords(22).row, indexToCoords(22).col] == "4,2");
+    console.assert([indexToCoords(24).row, indexToCoords(24).col] == "4,4");
+};
+
+var testGetCol = function() {
+    console.assert(
+        getCol([[1,2,3],[4,5,6],[7,8,9]], 0)                   == "1,4,7"
+    );
+    console.assert(
+        getCol([["a","b","c"],["d","e","f"],["g","h","i"]], 2) == "c,f,i"
+    );
+    console.assert(
+        getCol([[1,"a","2"],["b","3",4],["5",6,"c"]], 1)       == "a,3,6"
+    );
+    console.assert(
+        getCol([[1,2],["a",""],[3,"b"]], 1)                    == "2,,b"
+    );
+    console.assert(
+        getCol([[""],[""],[""]], 0)                            == ",,"
+    );
+    console.assert(
+        getCol([[],[],[]], 0)                                  == ",,"
+    );
+};
+
+var testGetCardName = function() {
+    console.assert(getCardName(0)  == "AC");
+    console.assert(getCardName(4)  == "2C");
+    console.assert(getCardName(28) == "8C");
+    console.assert(getCardName(36) == "10C");
+    console.assert(getCardName(9)  == "3S");
+    console.assert(getCardName(21) == "6S");
+    console.assert(getCardName(25) == "7S");
+    console.assert(getCardName(41) == "JS");
+    console.assert(getCardName(14) == "4H");
+    console.assert(getCardName(18) == "5H");
+    console.assert(getCardName(38) == "10H");
+    console.assert(getCardName(46) == "QH");
+    console.assert(getCardName(3)  == "AD");
+    console.assert(getCardName(27) == "7D");
+    console.assert(getCardName(35) == "9D");
+    console.assert(getCardName(51) == "KD");
+    console.assert(getCardName(52) == "empty");
+    console.assert(getCardName(53) == "back");
+};
+
+var testGetCardNum = function() {
+
+};
+
+var testCalScore = function() {
+
+};
+
+//Comment the desired test procedures to disable unit tests
+testIota();
+testMerge();
+testSort();
+testIndexToCoords();
+testGetCol();
+testGetCardName();
+testGetCardNum();
+testCalScore();
