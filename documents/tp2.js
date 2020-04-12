@@ -1,7 +1,7 @@
 /*
 * @Vincent Falardeau
 * @Philippe Gabriel
-* @Version 1.8.4 2020-04-22
+* @Version 1.39.8 2020-04-22
 *
 * This program aims to define an html page upon which the game of Poker
 * Shuffle, a type of solitary game, can be played following the general poker
@@ -9,11 +9,8 @@
 * how the main grid is filled
 **/
 
-// TODO: Unit tests for getCardNum and calScore
 // TODO: Play the game to find bugs if any
-// OPTIMIZE: calScore function for each hand combination, wait for instructions
-    // IDEA: The removeEmpty(hand) is good start for minimizing calculations
-    // TODO: Rework logic using tree of relations between hands
+// TODO: Test on Safari browser to adjust setTimeout() method if need be
 
 var mixDeck = []; //Array of randomly ordered cards in an integer encoding
 var currCard = 0; //Index indicating the next card to be flipped from pile
@@ -174,18 +171,20 @@ var getCol = function(mat, col) {
 };
 
 /*
-* The removeEmpty function removes the empty cells of a sorted hand array so as
-* to lead a desired analysis on the cards only
+* The removeEmpty function removes the specified empty cell encoding of a
+* sorted hand array so as to lead a desired analysis on the cards only
 *
 * @param hand Array describing the present cards including empty cells
+* @param empty Integer indicating specific number encoding for an empty cell
+* being the highest among the encoding of other cards
 * @return handCards Array describing the present cards excluding empty cells
 **/
 
-var removeEmpty = function(hand) {
+var removeEmpty = function(hand,empty) {
 
-    var handCards = hand.slice();
+    var handCards = sort(hand);
 
-    var emptyCell = handCards.indexOf(52); //Retrieving empty cell position
+    var emptyCell = handCards.indexOf(empty); //Retrieving empty cell position
 
     if (emptyCell != -1) {
         handCards.splice(emptyCell);
@@ -201,6 +200,7 @@ var removeEmpty = function(hand) {
 *
 * @param cardNum Integer representing the card encoding
 * @return cardName String indicating the file name of the correct image file
+* and if the file is not found, takes the value of an empty string
 **/
 
 var getCardName = function(cardNum) {
@@ -223,7 +223,11 @@ var getCardName = function(cardNum) {
         case 11: cardName += "Q";  break;
         case 12: cardName += "K";  break;
         default:
-            cardName = (cardNum == 52) ? "empty" : "back";
+            if (cardNum == 52) {
+                cardName = "empty";
+            } else if (cardNum == 53) {
+                cardName = "back";
+            }
             return cardName;
 
     }
@@ -244,12 +248,13 @@ var getCardName = function(cardNum) {
 * card name from its inputted file path
 *
 * @param cardPath String indicating file path of card
-* @return cardNum Integer representing the card encoding
+* @return cardNum Integer representing the card encoding and if the card is not
+* found, takes the value of -1
 **/
 
 var getCardNum = function(cardPath) {
 
-    var cardNum = 0;
+    var cardNum = -1;
 
     //Extracting card name from its file path
     var cardName = cardPath.split("/").pop().split(".").shift();
@@ -270,7 +275,11 @@ var getCardNum = function(cardPath) {
         case "Q" : cardNum = 44; break;
         case "K" : cardNum = 48; break;
         default  :
-            cardNum = (cardName == "empty") ? 52 : 53;
+            if (cardName == "empty") {
+                cardNum = 52;
+            } else if (cardName == "back") {
+                cardNum = 53;
+            }
             return cardNum;
     }
 
@@ -288,6 +297,16 @@ var getCardNum = function(cardPath) {
 /*
 * The calScore function determines a given array's score based on the known
 * Poker hands and their ranking
+* The following score system will be applied during hand analysis:
+*       Combination: Quinte Flush Royale; Score: 100
+*       Combination: Quinte Flush;        Score: 75
+*       Combination: Four Of A Kind;      Score: 50
+*       Combination: Full House;          Score: 25
+*       Combination: Flush;               Score: 20
+*       Combination: Quinte;              Score: 15
+*       Combination: Three Of A Kind;     Score: 10
+*       Combination: Two Pairs;           Score: 5
+*       Combination: Pair;                Score: 2
 *
 * @param hand Array with cards in their integer encoding
 * @return score Integer representing the score of the hand
@@ -322,7 +341,7 @@ var calScore = function(hand) {
 
     /*
     * The flush function determines if the given hand combination corresponds
-    * with the Flush poker hand consisting of cards of the same suit
+    * at least with the Flush poker hand consisting of cards of the same suit
     *
     * @param cards Array consisting of the hand of cards to analyze
     * @return comb Boolean determining whether Flush combination has been
@@ -348,8 +367,9 @@ var calScore = function(hand) {
 
     /*
     * The quinte function determines if the given hand combination corresponds
-    * with the Quinte poker hand consisting of cards with ranks arranged in
-    * numerical order including the special order of 10, Jack, Queen, King, Ace
+    * at least with the Quinte poker hand consisting of cards with ranks
+    * arranged in numerical order including the special order of a 10, a Jack,
+    * a Queen, a King and an Ace
     *
     * @param cards Array consisting of the hand of cards to analyze
     * @return comb Boolean determining whether Quinte combination has been
@@ -361,9 +381,16 @@ var calScore = function(hand) {
         comb = false;
 
         //Conditions for respecting Quinte combination including special case
-        if (((cards[cards.length - 1] >> 2) - (cards[0] >> 2) == 4)
-        || ((cards[cards.length - 1] >> 2) - (cards[0] >> 2) == 12)) {
+        if ((cards[cards.length - 1] >> 2) - (cards[0] >> 2) == 4) {
+
             comb = true;
+
+        } else if (cards[0] >> 2 == 0) { //Special combination case
+
+            if ((cards[cards.length - 1] >> 2) - (cards[1] >> 2) == 3) {
+
+                comb = true;
+            }
         }
 
         return comb;
@@ -386,11 +413,22 @@ var calScore = function(hand) {
 
         if (cards.length >= 4) {
 
-            for (var i = 4; i < cards.length; i++) {
+            for (var i = 4; i <= cards.length; i++) {
 
                 //Condition consists of having two different pairs of cards
-                if (pair(cards.slice(i-2,i) && pair(i-4,i-2))) {
+                if (pair(cards.slice(i-2,i)) && pair(cards.slice(i-4,i-2))) {
+
                     comb = true;
+                    break;
+                }
+
+                if (i == 5) { //Special case when side card is in the middle
+
+                    if ((pair(cards.slice(i-2,i))
+                    && pair(cards.slice(i-5,i-3)))) {
+
+                        comb = true;
+                    }
                 }
             }
         }
@@ -417,6 +455,7 @@ var calScore = function(hand) {
             //Three Of A Kind and Pair constitute the condition for Full House
             if ((threeOfAKind(cards.slice(0,3)) && pair(cards.slice(3)))
             || (pair(cards.slice(0,2)) && threeOfAKind(cards.slice(2)))) {
+
                 comb = true;
             }
         }
@@ -442,8 +481,8 @@ var calScore = function(hand) {
 
             for (var i = 3; i < cards.length; i++) {
 
-                //Conditions verifying Three Of A Kind combination
-                if ((cards[i] >> 2) == (cards[i - 3] >> 2)) {
+                //Condition verifying Four Of A Kind combination
+                if ((cards[i] >> 2) == (cards[i-3] >> 2)) {
 
                     comb = true;
                     break;
@@ -472,8 +511,8 @@ var calScore = function(hand) {
 
             for (var i = 2; i < cards.length; i++) {
 
-                //Conditions verifying Three Of A Kind combination
-                if ((cards[i] >> 2) == (cards[i - 2] >> 2)) {
+                //Condition verifying Three Of A Kind combination
+                if ((cards[i] >> 2) == (cards[i-2] >> 2)) {
 
                     comb = true;
                     break;
@@ -499,7 +538,10 @@ var calScore = function(hand) {
         comb = false;
 
         for (var i = 1; i < cards.length; i++) {
-            if ((cards[i] >> 2) == (cards[i - 1] >> 2)) {
+
+            //Condition verifying Pair combination
+            if ((cards[i] >> 2) == (cards[i-1] >> 2)) {
+
                 comb = true;
                 break;
             }
@@ -529,7 +571,7 @@ var calScore = function(hand) {
             if (hand.length == 5) {
 
                 //Both these combinations constitute Quinte Flush combination
-                if (quinte(hand) && flush(hand)) {
+                if (flush(hand) && quinte(hand)) {
 
                     //Hand evaluated to be one of two below combinations
                     if (quinteFlushRoyale(hand)) score = 100;
@@ -537,7 +579,7 @@ var calScore = function(hand) {
 
                 } else if (flush(hand)) { //Hand evaluated to be Flush
                     score = 20;
-                } else { //Hand evaluated to be Quinte
+                } else if (quinte(hand)) { //Hand evaluated to be Quinte
                     score = 15;
                 }
             }
@@ -569,11 +611,11 @@ var scoreSystem = function() {
         function(line, pos) {
 
             rCellScore = document.getElementById('R' + pos);
-            rScore = calScore(removeEmpty(sort(line)));
+            rScore = calScore(removeEmpty(line,52));
             rCellScore.innerHTML = (rScore == 0) ? "" : rScore;
 
             cCellScore = document.getElementById('C' + pos);
-            cScore = calScore(removeEmpty(sort(getCol(boardState,pos))));
+            cScore = calScore(removeEmpty(getCol(boardState,pos),52));
             cCellScore.innerHTML = (cScore == 0) ? "" : cScore;
 
             tScore += rScore + cScore;
@@ -589,7 +631,7 @@ var scoreSystem = function() {
         setTimeout(function() { //Wait until content is loaded before pop-up
             alert("Votre pointage final est " + tScore);
             init();
-        }, 10)
+        }, 1)
     }
 };
 
@@ -951,7 +993,13 @@ var testGetCol = function() {
 };
 
 var testRemoveEmpty = function() {
-
+    console.assert(removeEmpty([0,1,2,52,52],52) == "0,1,2");
+    console.assert(removeEmpty([4,2,1,52,5],52) == "1,2,4,5");
+    console.assert(removeEmpty([4,5,6,7,8],52) == "4,5,6,7,8");
+    console.assert(removeEmpty([6,1,3,2,0],52) == "0,1,2,3,6");
+    console.assert(removeEmpty([0,1,2,3,4],2) == "0,1");
+    console.assert(removeEmpty([8,3,6,2,49],2) == "");
+    console.assert(removeEmpty([],4) == "");
 };
 
 var testGetCardName = function() {
@@ -973,14 +1021,82 @@ var testGetCardName = function() {
     console.assert(getCardName(51) == "KD");
     console.assert(getCardName(52) == "empty");
     console.assert(getCardName(53) == "back");
+    console.assert(getCardName(-1) == "");
+    console.assert(getCardName(60) == "");
 };
 
 var testGetCardNum = function() {
-
+    console.assert(getCardNum("documents/cards/AH.svg")            == 2);
+    console.assert(getCardNum("test/3S.svg")                       == 9);
+    console.assert(getCardNum("<img src='cards/8D.svg'>")          == 31);
+    console.assert(getCardNum("KC.svg")                            == 48);
+    console.assert(getCardNum("c:/users/cards/RedJoker.svg")       == -1);
+    console.assert(getCardNum("BlackJoker.svg")                    == -1);
+    console.assert(getCardNum("tp2/documents/cards/empty.svg")     == 52);
+    console.assert(getCardNum("Prog/tp2/documents/cards/back.svg") == 53);
+    console.assert(getCardNum("memes/pepe.svg")                    == -1);
+    console.assert(getCardNum("")                                  == -1);
 };
 
 var testCalScore = function() {
-
+    console.assert(calScore([0,36,40,44,48])  == 100);
+    console.assert(calScore([1,37,41,45,49])  == 100);
+    console.assert(calScore([7,11,15,19,23])  == 75);
+    console.assert(calScore([10,14,18,22,26]) == 75);
+    console.assert(calScore([8,9,10,11,39])   == 50);
+    console.assert(calScore([1,32,33,34,35])  == 50);
+    console.assert(calScore([20,21,22,23])    == 50);
+    console.assert(calScore([12,13,37,38,39]) == 25);
+    console.assert(calScore([41,42,43,22,23]) == 25);
+    console.assert(calScore([4,20,28,40,44])  == 20);
+    console.assert(calScore([13,21,25,29,33]) == 20);
+    console.assert(calScore([11,19,31,35,39]) == 20);
+    console.assert(calScore([4,20,28,40,44])  == 20);
+    console.assert(calScore([3,7,43,47,51])   == 20);
+    console.assert(calScore([1,5,9,45,49])    == 20);
+    console.assert(calScore([0,37,40,45,49])  == 15);
+    console.assert(calScore([34,37,40,45,49]) == 15);
+    console.assert(calScore([10,12,19,21,25]) == 15);
+    console.assert(calScore([3,5,10,15,16])   == 15);
+    console.assert(calScore([0,1,2,15,16])    == 10);
+    console.assert(calScore([8,21,22,23,47])  == 10);
+    console.assert(calScore([3,27,40,41,42])  == 10);
+    console.assert(calScore([33,34,35,46])    == 10);
+    console.assert(calScore([1,5,6,7])        == 10);
+    console.assert(calScore([12,13,14])       == 10);
+    console.assert(calScore([16,17,30,31,51]) == 5);
+    console.assert(calScore([10,11,14,37,39]) == 5);
+    console.assert(calScore([28,36,39,46,47]) == 5);
+    console.assert(calScore([21,23,48,49])    == 5);
+    console.assert(calScore([9,10,12,14])     == 5);
+    console.assert(calScore([24,27,32,38,43]) == 2);
+    console.assert(calScore([3,9,11,25,34])   == 2);
+    console.assert(calScore([19,20,29,30,46]) == 2);
+    console.assert(calScore([5,10,12,50,51])  == 2);
+    console.assert(calScore([13,14,32,41])    == 2);
+    console.assert(calScore([15,28,31,43])    == 2);
+    console.assert(calScore([0,5,16,17])      == 2);
+    console.assert(calScore([0,3,39])         == 2);
+    console.assert(calScore([21,41,43])       == 2);
+    console.assert(calScore([29,30])          == 2);
+    console.assert(calScore([0,7,40,44,48])   == 0);
+    console.assert(calScore([2,5,9,46,51])    == 0);
+    console.assert(calScore([6,12,21,34,41])  == 0);
+    console.assert(calScore([3,15,29,32])     == 0);
+    console.assert(calScore([27,29,35,48])    == 0);
+    console.assert(calScore([17,33,41,45])    == 0);
+    console.assert(calScore([18,22,26,30])    == 0);
+    console.assert(calScore([9,18,43])        == 0);
+    console.assert(calScore([5,10,12])        == 0);
+    console.assert(calScore([13,25,29])       == 0);
+    console.assert(calScore([19,23,27])       == 0);
+    console.assert(calScore([4,47])           == 0);
+    console.assert(calScore([21,27])          == 0);
+    console.assert(calScore([13,33])          == 0);
+    console.assert(calScore([2,6])            == 0);
+    console.assert(calScore([1])              == 0);
+    console.assert(calScore([35])             == 0);
+    console.assert(calScore([])               == 0);
 };
 
 //Comment the desired test procedures to disable unit tests
