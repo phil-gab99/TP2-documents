@@ -1,7 +1,7 @@
 /*
 * @Vincent Falardeau
 * @Philippe Gabriel
-* @Version 1.39.8 2020-04-22
+* @Version 1.39.12 2020-04-22
 *
 * This program aims to define an html page upon which the game of Poker
 * Shuffle, a type of solitary game, can be played following the general poker
@@ -25,11 +25,11 @@ var clickState = [];   //Array of booleans indicating when cell is clicked
 /*
 * The iota function is responsible for creating an array of determined length
 * filled with integer values at its indexes in descending order ranging from
-* n-1 up to 0
+* n-1 down to 0
 *
 * @param n Integer indicating the length of the array to return
 * @return table Array with the set length and values at its indexes ranging
-* from 0 to n - 1
+* from n-1 to 0
 **/
 
 var iota = function(n) {
@@ -665,8 +665,7 @@ var clic = function(id) {
     //File paths for each card state
     var back     = '<img src="cards/back.svg">';
     var empty    = '<img src="cards/empty.svg">';
-    var deckCard =
-    '<img src="cards/' + getCardName(mixDeck[currCard]) + '.svg">';
+    var deckCard = '<img src="cards/'+getCardName(mixDeck[currCard])+'.svg">';
 
     var boardCard = ''; //Card name of previously selected card on grid
     var temp      = ''; //Temporary card name for exchanging cards
