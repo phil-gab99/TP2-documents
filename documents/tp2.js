@@ -303,27 +303,19 @@ var calScore = function(hand) {
     * corresponds with the Quinte Flush Royale poker hand consisting of an Ace,
     * a King, a Queen, a Jack, and a 10 of the same suit
     *
+    * @param cards Array consisting of the hand of cards to analyze
     * @return comb Boolean determining whether Quinte Flush Royale combination
     * has been achieved or not
     **/
 
     var quinteFlushRoyale = function(cards) {
 
-        card = hand[0];
+        comb = false;
 
-        if (card >> 2 == 0) { //Checking for the Ace card
+        //Conditions for respecting Quinte Royal Flush combination
+        if ((cards[cards.length - 1] >> 2) - (cards[0] >> 2) == 12) {
 
-            for (var i = 1; i < hand.length; i++) {
-
-                //Conditions for breaking Quinte Royal Flush combination
-                if ((hand[i] >> 2 != 8 + i) || ((hand[i] & 3) != (card & 3))) {
-
-                    comb = false;
-                    break;
-                }
-            }
-        } else {
-            comb = false;
+            comb = true;
         }
         return comb;
     };
@@ -332,28 +324,25 @@ var calScore = function(hand) {
     * The flush function determines if the given hand combination corresponds
     * with the Flush poker hand consisting of cards of the same suit
     *
+    * @param cards Array consisting of the hand of cards to analyze
     * @return comb Boolean determining whether Flush combination has been
     * achieved or not
     **/
 
     var flush = function(cards) {
 
-        if (hand.indexOf(52) == -1) { //Empty grid cell verification
+        comb = true;
 
-            card = hand[0];
+        for (var i = 1; i < cards.length; i++) {
 
-            for (var i = 1; i < hand.length; i++) {
+            //Condition for breaking Flush combination
+            if ((cards[i] & 3) != (cards[i-1] & 3)) {
 
-                //Condition for breaking Flush combination
-                if ((hand[i] & 3) != (card & 3)) {
-
-                    comb = false;
-                    break;
-                }
+                comb = false;
+                break;
             }
-        } else {
-            comb = false;
         }
+
         return comb;
     };
 
@@ -362,6 +351,7 @@ var calScore = function(hand) {
     * with the Quinte poker hand consisting of cards with ranks arranged in
     * numerical order including the special order of 10, Jack, Queen, King, Ace
     *
+    * @param cards Array consisting of the hand of cards to analyze
     * @return comb Boolean determining whether Quinte combination has been
     * achieved or not
     **/
@@ -370,44 +360,12 @@ var calScore = function(hand) {
 
         comb = false;
 
-        if (card >> 2 == 0) { //First card Ace has two valid combinations
-
-            if (hand[1] >> 2 == 1) {
-
-                for (var i = 2; i < hand.length; i++) {
-
-                    //Condition for breaking first valid Quinte combination
-                    if (hand[i] >> 2 != i) {
-
-                        comb = false;
-                        break;
-                    }
-                }
-            } else {
-
-                for (var i = 1; i < hand.length; i++) {
-
-                    //Condition for breaking the special Quinte combination
-                    if (hand[i] >> 2 != 8 + i) {
-
-                        comb = false;
-                        break;
-                    }
-                }
-            }
-
-        } else {
-
-            for (var i = 1; i < hand.length; i++) {
-
-                //Condition for breaking Quinte combination
-                if ((hand[i] >> 2) - 1 != hand[i-1] >> 2) {
-
-                    comb = false;
-                    break;
-                }
-            }
+        //Conditions for respecting Quinte combination including special case
+        if (((cards[cards.length - 1] >> 2) - (cards[0] >> 2) == 4)
+        || ((cards[cards.length - 1] >> 2) - (cards[0] >> 2) == 12)) {
+            comb = true;
         }
+
         return comb;
     };
 
@@ -417,6 +375,7 @@ var calScore = function(hand) {
     * matching rank and another two cards of a different matching rank and one
     * side card
     *
+    * @param cards Array consisting of the hand of cards to analyze
     * @return comb Boolean determining whether Two Pairs combination has been
     * achieved or not
     **/
@@ -425,8 +384,11 @@ var calScore = function(hand) {
 
         comb = false;
 
-        if cards.length >= 4 {
-            for (var i = 4; i < hand.length; i++) {
+        if (cards.length >= 4) {
+
+            for (var i = 4; i < cards.length; i++) {
+
+                //Condition consists of having two different pairs of cards
                 if (pair(cards.slice(i-2,i) && pair(i-4,i-2))) {
                     comb = true;
                 }
@@ -441,6 +403,7 @@ var calScore = function(hand) {
     * corresponds with the Full House poker hand consisting of three cards of
     * the same rank and the other two of a different matching rank
     *
+    * @param cards Array consisting of the hand of cards to analyze
     * @return comb Boolean determining whether Full House combination has been
     * achieved or not
     **/
@@ -451,6 +414,7 @@ var calScore = function(hand) {
 
         if (cards.length == 5) {
 
+            //Three Of A Kind and Pair constitute the condition for Full House
             if ((threeOfAKind(cards.slice(0,3)) && pair(cards.slice(3)))
             || (pair(cards.slice(0,2)) && threeOfAKind(cards.slice(2)))) {
                 comb = true;
@@ -465,6 +429,7 @@ var calScore = function(hand) {
     * corresponds with the Four Of A Kind poker hand consisting of four cards
     * with matching rank and one side card
     *
+    * @param cards Array consisting of the hand of cards to analyze
     * @return comb Boolean determining whether Four Of A Kind combination has
     * been achieved or not
     **/
@@ -494,6 +459,7 @@ var calScore = function(hand) {
     * corresponds at least with the Three Of A Kind poker hand consisting of
     * three cards of matching rank and two unrelated side cards
     *
+    * @param cards Array consisting of the hand of cards to analyze
     * @return comb Boolean determining whether Three Of A Kind combination has
     * been achieved or not
     **/
@@ -523,6 +489,7 @@ var calScore = function(hand) {
     * at least with the Pairs poker hand consisting of two cards of matching
     * rank and three unrelated side cards
     *
+    * @param cards Array consisting of the hand of cards to analyze
     * @return comb Boolean determining whether Pairs combination has been
     * achieved or not
     **/
@@ -541,30 +508,36 @@ var calScore = function(hand) {
         return comb;
     };
 
-    if (hand.length >= 2) {
+    if (hand.length >= 2) { //Minimal condition for respecting a combination
 
-        if (pair(hand)) {
-            if (threeOfAKind(hand)) {
-                if (fourOfAKind(hand)) {
-                    score = 50;
-                } else if (fullHouse(hand)) {
-                    score = 25;
-                } else {
-                    score = 10;
-                }
-            } else if (twoPairs(hand)) {
+        if (pair(hand)) { //Hand contains at least a Pair
+
+            if (threeOfAKind(hand)) { //Hand contains at least Three Of A Kind
+
+                //Hand evaluated to be one of three below combinations
+                if (fourOfAKind(hand)) score = 50;
+                else if (fullHouse(hand)) score = 25;
+                else score = 10;
+
+            } else if (twoPairs(hand)) { //Hand evaluated to be Two Pairs
                 score = 5;
-            } else {
+            } else { //Hand evaluated to be Pair
                 score = 2;
             }
         } else {
+
             if (hand.length == 5) {
+
+                //Both these combinations constitute Quinte Flush combination
                 if (quinte(hand) && flush(hand)) {
+
+                    //Hand evaluated to be one of two below combinations
                     if (quinteFlushRoyale(hand)) score = 100;
                     else score = 75;
-                } else if (flush(hand)) {
+
+                } else if (flush(hand)) { //Hand evaluated to be Flush
                     score = 20;
-                } else {
+                } else { //Hand evaluated to be Quinte
                     score = 15;
                 }
             }
@@ -572,18 +545,6 @@ var calScore = function(hand) {
     }
 
     return score;
-
-    //Same suit --> (x & 3)  == (y & 3)
-    //Same rank --> (x >> 2) == (y >> 2)
-    if (quinteFlushRoyale()) return score; else comb = true; score = 75;
-    if (quinteFlush())       return score; else comb = true; score = 50;
-    if (fourOfAKind())       return score; else comb = true; score = 25;
-    if (fullHouse())         return score; else comb = true; score = 20;
-    if (flush())             return score; else comb = true; score = 15;
-    if (quinte())            return score; else comb = true; score = 10;
-    if (threeOfAKind())      return score; else comb = true; score = 5;
-    if (twoPairs())          return score; else comb = true; score = 2;
-    if (pair())              return score; else return 0;
 };
 
 /*
@@ -608,11 +569,11 @@ var scoreSystem = function() {
         function(line, pos) {
 
             rCellScore = document.getElementById('R' + pos);
-            rScore = calScore(sort(line));
+            rScore = calScore(removeEmpty(sort(line)));
             rCellScore.innerHTML = (rScore == 0) ? "" : rScore;
 
             cCellScore = document.getElementById('C' + pos);
-            cScore = calScore(sort(getCol(boardState,pos)));
+            cScore = calScore(removeEmpty(sort(getCol(boardState,pos))));
             cCellScore.innerHTML = (cScore == 0) ? "" : cScore;
 
             tScore += rScore + cScore;
@@ -989,6 +950,10 @@ var testGetCol = function() {
     );
 };
 
+var testRemoveEmpty = function() {
+
+};
+
 var testGetCardName = function() {
     console.assert(getCardName(0)  == "AC");
     console.assert(getCardName(4)  == "2C");
@@ -1024,6 +989,7 @@ testMerge();
 testSort();
 testIndexToCoords();
 testGetCol();
+testRemoveEmpty();
 testGetCardName();
 testGetCardNum();
 testCalScore();
