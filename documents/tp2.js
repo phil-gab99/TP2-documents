@@ -293,15 +293,10 @@ var getCardNum = function(cardPath) {
 * @return score Integer representing the score of the hand
 **/
 
-//Same suit --> (x & 3)  == (y & 3)
-//Same rank --> (x >> 2) == (y >> 2)
-
 var calScore = function(hand) {
 
     var comb = true; //Boolean determining if hand corresponds with combination
-    var score = 100; //Integer representing score for specific hand combination
-
-    var card;        //The card from which the others will be compared
+    var score = 0;   //Integer representing score for specific hand combination
 
     /*
     * The quinteFlushRoyale function determines if the given hand combination
@@ -312,7 +307,7 @@ var calScore = function(hand) {
     * has been achieved or not
     **/
 
-    var quinteFlushRoyale = function() {
+    var quinteFlushRoyale = function(cards) {
 
         card = hand[0];
 
@@ -334,117 +329,6 @@ var calScore = function(hand) {
     };
 
     /*
-    * The quinteFlush function determines if the given hand combination
-    * corresponds with the Quinte Flush poker hand consisting cards of the same
-    * suit and ranks arranged in numerical order
-    *
-    * @return comb Boolean determining whether Quinte Flush combination has
-    * been achieved or not
-    **/
-
-    var quinteFlush = function() {
-
-        if (hand.indexOf(52) == -1) { //Empty grid cell verification
-
-            card = hand[0];
-
-            for (var i = 1; i < hand.length; i++) {
-
-                //Conditions for breaking Quinte Flush combination
-                if (((hand[i] >> 2) - 1 != hand[i-1] >> 2)
-                || ((hand[i] & 3) != (card & 3))) {
-
-                    comb = false;
-                    break;
-                }
-            }
-        } else {
-            comb = false;
-        }
-        return comb;
-    };
-
-    /*
-    * The fourOfAKind function determines if the given hand combination
-    * corresponds with the Four Of A Kind poker hand consisting of four cards
-    * with matching rank and one side card
-    *
-    * @return comb Boolean determining whether Four Of A Kind combination has
-    * been achieved or not
-    **/
-
-    var fourOfAKind = function() {
-
-        //Last card in hand excluded from combination
-        if (hand[0] >> 2 == hand[1] >> 2 && hand[0] != 52) {
-
-            card = hand[0];
-
-            for (var i = 2; i < hand.length - 1; i++) {
-
-                //Conditions for breaking Four Of A Kind combination
-                if (hand[i] >> 2 != card >> 2) {
-                    comb = false;
-                    break;
-                }
-            }
-
-        //First card in hand excluded from combination
-        } else if (hand[1] >> 2 == hand[2] >> 2 && hand[1] != 52) {
-
-            card = hand[1];
-
-            for (var i = 3; i < hand.length; i++) {
-
-                //Conditions for breaking Four Of A Kind combination
-                if (hand[i] >> 2 != card >> 2) {
-                    comb = false;
-                    break;
-                }
-            }
-        } else {
-            comb = false;
-        }
-        return comb;
-    };
-
-    /*
-    * The fullHouse function determines if the given hand combination
-    * corresponds with the Full House poker hand consisting of three cards of
-    * the same rank and the other two of a different matching rank
-    *
-    * @return comb Boolean determining whether Full House combination has been
-    * achieved or not
-    **/
-
-    var fullHouse = function() {
-
-        if (hand.indexOf(52) == -1) { //Empty grid cell verification
-
-            //Three first cards are of the same rank
-            if ((hand[0] >> 2 == hand[1] >> 2)
-            && (hand[0] >> 2 == hand[2] >> 2)) {
-
-                //Last two cards of differing rank breaks the combination
-                if (hand[3] >> 2 != hand[4] >> 2) comb = false;
-
-            //Three last cards are of the same rank
-            } else if ((hand[2] >> 2 == hand[3] >> 2)
-            && (hand[2] >> 2 == hand[4] >> 2)) {
-
-                //First two cards of differing rank breaks the combination
-                if (hand[0] >> 2 != hand[1] >> 2) comb = false;
-
-            } else {
-                comb = false;
-            }
-        } else {
-            comb = false;
-        }
-        return comb;
-    };
-
-    /*
     * The flush function determines if the given hand combination corresponds
     * with the Flush poker hand consisting of cards of the same suit
     *
@@ -452,7 +336,7 @@ var calScore = function(hand) {
     * achieved or not
     **/
 
-    var flush = function() {
+    var flush = function(cards) {
 
         if (hand.indexOf(52) == -1) { //Empty grid cell verification
 
@@ -482,77 +366,46 @@ var calScore = function(hand) {
     * achieved or not
     **/
 
-    var quinte = function() {
+    var quinte = function(cards) {
 
-        if (hand.indexOf(52) == -1) { //Empty grid cell verification
+        comb = false;
 
-            card = hand[0];
+        if (card >> 2 == 0) { //First card Ace has two valid combinations
 
-            if (card >> 2 == 0) { //First card Ace has two valid combinations
+            if (hand[1] >> 2 == 1) {
 
-                if (hand[1] >> 2 == 1) {
+                for (var i = 2; i < hand.length; i++) {
 
-                    for (var i = 2; i < hand.length; i++) {
+                    //Condition for breaking first valid Quinte combination
+                    if (hand[i] >> 2 != i) {
 
-                        //Condition for breaking first valid Quinte combination
-                        if (hand[i] >> 2 != i) {
-
-                            comb = false;
-                            break;
-                        }
-                    }
-                } else {
-
-                    for (var i = 1; i < hand.length; i++) {
-
-                        //Condition for breaking the special Quinte combination
-                        if (hand[i] >> 2 != 8 + i) {
-
-                            comb = false;
-                            break;
-                        }
+                        comb = false;
+                        break;
                     }
                 }
-
             } else {
 
                 for (var i = 1; i < hand.length; i++) {
 
-                    //Condition for breaking Quinte combination
-                    if ((hand[i] >> 2) - 1 != hand[i-1] >> 2) {
+                    //Condition for breaking the special Quinte combination
+                    if (hand[i] >> 2 != 8 + i) {
 
                         comb = false;
                         break;
                     }
                 }
             }
+
         } else {
-            comb = false;
-        }
-        return comb;
-    };
 
-    /*
-    * The threeOfAKind function determines if the given hand combination
-    * corresponds with the Three Of A Kind poker hand consisting of three cards
-    * of matching rank and two unrelated side cards
-    *
-    * @return comb Boolean determining whether Three Of A Kind combination has
-    * been achieved or not
-    **/
+            for (var i = 1; i < hand.length; i++) {
 
-    var threeOfAKind = function() {
+                //Condition for breaking Quinte combination
+                if ((hand[i] >> 2) - 1 != hand[i-1] >> 2) {
 
-        comb = false;
-
-        for (var i = 2; i < hand.length; i++) {
-
-            //Conditions verifying Three Of A Kind combination
-            if ((hand[i] != 52) && ((hand[i] >> 2 == hand[i-1] >> 2)
-            && (hand[i] >> 2 == hand[i-2] >> 2))) {
-
-                comb = true;
-                break;
+                    comb = false;
+                    break;
+                }
             }
         }
         return comb;
@@ -568,66 +421,160 @@ var calScore = function(hand) {
     * achieved or not
     **/
 
-    var twoPairs = function() {
+    var twoPairs = function(cards) {
 
         comb = false;
 
-        firstPair:
-        for (var i = 1; i < hand.length; i++) {
-
-            //Condition verifying presence of first pair
-            if (hand[i] != 52 && hand[i] >> 2 == hand[i-1] >> 2) {
-
-                for (var j = i + 1; j < hand.length; j++) {
-
-                    //Condition verifying presence of second pair
-                    if (hand[j] != 52 && hand[j] >> 2 == hand[j-1] >> 2) {
-
-                        comb = true;
-                        break firstPair;
-                    }
+        if cards.length >= 4 {
+            for (var i = 4; i < hand.length; i++) {
+                if (pair(cards.slice(i-2,i) && pair(i-4,i-2))) {
+                    comb = true;
                 }
             }
         }
+
         return comb;
     };
 
     /*
-    * The pairs function determines if the given hand combination
-    * corresponds with the Pairs poker hand consisting of two cards of matching
+    * The fullHouse function determines if the given hand combination
+    * corresponds with the Full House poker hand consisting of three cards of
+    * the same rank and the other two of a different matching rank
+    *
+    * @return comb Boolean determining whether Full House combination has been
+    * achieved or not
+    **/
+
+    var fullHouse = function(cards) {
+
+        comb = false;
+
+        if (cards.length == 5) {
+
+            if ((threeOfAKind(cards.slice(0,3)) && pair(cards.slice(3)))
+            || (pair(cards.slice(0,2)) && threeOfAKind(cards.slice(2)))) {
+                comb = true;
+            }
+        }
+
+        return comb;
+    };
+
+    /*
+    * The fourOfAKind function determines if the given hand combination
+    * corresponds with the Four Of A Kind poker hand consisting of four cards
+    * with matching rank and one side card
+    *
+    * @return comb Boolean determining whether Four Of A Kind combination has
+    * been achieved or not
+    **/
+
+    var fourOfAKind = function(cards) {
+
+        comb = false;
+
+        if (cards.length >= 4) {
+
+            for (var i = 3; i < cards.length; i++) {
+
+                //Conditions verifying Three Of A Kind combination
+                if ((cards[i] >> 2) == (cards[i - 3] >> 2)) {
+
+                    comb = true;
+                    break;
+                }
+            }
+        }
+
+        return comb;
+    };
+
+    /*
+    * The threeOfAKind function determines if the given hand combination
+    * corresponds at least with the Three Of A Kind poker hand consisting of
+    * three cards of matching rank and two unrelated side cards
+    *
+    * @return comb Boolean determining whether Three Of A Kind combination has
+    * been achieved or not
+    **/
+
+    var threeOfAKind = function(cards) {
+
+        comb = false;
+
+        if (cards.length >= 3) {
+
+            for (var i = 2; i < cards.length; i++) {
+
+                //Conditions verifying Three Of A Kind combination
+                if ((cards[i] >> 2) == (cards[i - 2] >> 2)) {
+
+                    comb = true;
+                    break;
+                }
+            }
+        }
+
+        return comb;
+    };
+
+    /*
+    * The pairs function determines if the given hand combination corresponds
+    * at least with the Pairs poker hand consisting of two cards of matching
     * rank and three unrelated side cards
     *
     * @return comb Boolean determining whether Pairs combination has been
     * achieved or not
     **/
 
-    var pair = function() {
+    var pair = function(cards) {
 
         comb = false;
 
-        for (var i = 1; i < hand.length; i++) {
-
-            //Condition verifying Pair combination
-            if (hand[i] != 52 && hand[i] >> 2 == hand[i-1] >> 2) {
-
+        for (var i = 1; i < cards.length; i++) {
+            if ((cards[i] >> 2) == (cards[i - 1] >> 2)) {
                 comb = true;
                 break;
             }
         }
+
         return comb;
     };
 
-    // //Scores are assigned with respect to the ranking of the hand combination
-    // if (hand.length < 5) {
-    //
-    // } else if (hand.length < 4) {
-    //
-    // } else if (hand.length < 3) {
-    //
-    // } else {
-    //
-    // }
+    if (hand.length >= 2) {
 
+        if (pair(hand)) {
+            if (threeOfAKind(hand)) {
+                if (fourOfAKind(hand)) {
+                    score = 50;
+                } else if (fullHouse(hand)) {
+                    score = 25;
+                } else {
+                    score = 10;
+                }
+            } else if (twoPairs(hand)) {
+                score = 5;
+            } else {
+                score = 2;
+            }
+        } else {
+            if (hand.length == 5) {
+                if (quinte(hand) && flush(hand)) {
+                    if (quinteFlushRoyale(hand)) score = 100;
+                    else score = 75;
+                } else if (flush(hand)) {
+                    score = 20;
+                } else {
+                    score = 15;
+                }
+            }
+        }
+    }
+
+    return score;
+
+    //Same suit --> (x & 3)  == (y & 3)
+    //Same rank --> (x >> 2) == (y >> 2)
     if (quinteFlushRoyale()) return score; else comb = true; score = 75;
     if (quinteFlush())       return score; else comb = true; score = 50;
     if (fourOfAKind())       return score; else comb = true; score = 25;
