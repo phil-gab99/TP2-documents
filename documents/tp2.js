@@ -488,7 +488,9 @@ var calculateScore = function(){
     //Calculate the score of every row
     gameboardContent.forEach(function(hand, i){
 
-        totalScore += handScore(hand);
+        var score = handScore(hand);
+
+        totalScore += +score;
 
         var cellId = i + 1 + "6";
         document.getElementById(cellId).innerHTML = score;
@@ -497,7 +499,9 @@ var calculateScore = function(){
     //Calculate the score of every column
     transpose(gameboardContent).forEach(function(hand, i){
 
-        totalScore += handScore(hand);
+        var score = handScore(hand);
+
+        totalScore += +score;
 
         var cellId = "6" + (i + 1);
         document.getElementById(cellId).innerHTML = score;
@@ -532,34 +536,62 @@ Returns the score of that hand as string.
 */
 var handScore = function(hand){
 
+    //Contains the hand's elements' numerical values
+    var values = valuesFrom(hand);
+
+    //Contains the hand's elements' types
+    var types = typesFrom(hand);
+    removeEmpty(types);
+
     //Contains the hand's score
     var score = 0;
-
     
-    var values = valuesFrom(hand);
-    var types = typesFrom(hand);
-
+    //Contains a copy of values
     var cpy = copy(values);
     removeEmpty(cpy);
-    score = evaluate(fullHouse(cpy, ""));
 
-    var result = quinteFlush(values, types);
-    if(result > score){
-        score = result;
+    //Evaluate the first possible cases
+    var result1 = evaluate(fullHouse(cpy, ""));
+
+    //Evaluate the other possible cases
+    var result2 = quinteFlushRoyale(values, types);
+
+    //Get the highest score of all the cases
+    if(+result1 > +result2){
+        score = result1;
+    }
+    else{
+        score = result2;
     }
 
-    if(score <= 0){
-        score = "";
+    if(score == 0){
+        return "";
     }
-    return +score;
+
+    return score;
 };
 
-var quinteFlush = function(cards, types){
+/*
+Evaluates the score of the hand by checking if it is Quinte Flush Royale,
+Quinte Flush, Flush, Quinte or none of them.
+Takes cards, array containing the hand's cards' values.
+      types, array containing the hand's cards' types.
+Returns the score corresponding to the value of the hand.
+*/
+var quinteFlushRoyale = function(cards, types){
+
+    //Integer containing the score
     var score = 0;
+
     trier(cards);
-    var streak = 1;
+
+    //Boolean indicating if the hand contains a king and ace
     var royale = cards[0] == 1 && cards[cards.length - 1] == 13;
 
+    //Integer counting the number of cards that follow one another
+    var streak = 1;
+
+    //Getting the number of cards that follow one another    
     for (var i = 1; i < cards.length; i++) {
         if(cards[i] - cards[i - 1] == 1 || (royale && i == 1)){
             streak++;
@@ -568,38 +600,57 @@ var quinteFlush = function(cards, types){
             streak = 0;
         }
     }
-    var isFlush = flush(types) == 20;
+
+    //Boolean indicating whether the hand is flush or not
+    var isFlush = flush(types);
+
+    //Evaluating the score according to the results
     if(streak == 5 && isFlush && royale){
         score = 100;
     }
-    if(streak == 5 && isFlush){
+    else if(streak == 5 && isFlush){
         score = 75;
     }
-    if(isFlush){
+    else if(isFlush){
         score = 20;
     }
-    if(streak == 5){
+    else if(streak == 5){
         score =  15;
     }
     return score;
 };
 
+/*
+Returns a boolean indicating if the cards are flush or not.
+Takes cards, array representing the cards' types.
+*/
 var flush = function(cards){
-    var isFlush = true;
-    for (var i = 1; i < cards.length; i++) {
-        if(cards[i] == emptyCard || cards[i] - cards[i - 1] != 0){
-            isFlush = false;
-            break;
-        }
+
+    //The hand must contain five cards to even be considered flush
+    if(cards.length == 5){
+
+        //Remove every card that has the same type than the first one
+        remove(cards, cards[0]);
+
+        //Will give true if every card had the same type than the first one
+        return cards.length == 0;
     }
-    if (isFlush) {
-        return 20;
-    }
-    return 0;
+    return false;
 };
 
+/*
+Evaluates the score of the hand by checking if it is Carre, Full House,
+Brelan, Double Paire, Paire.
+Takes cards, array of cards representing the hand
+      result, string representing the result made recursively by the function.
+Returns the result as an RLE format string representing the best combinaison
+found.
+*/
 var fullHouse = function(cards, result){
+    //Remove the first card an keep it in first
     let first = cards.shift();
+
+    //Checking if first is found 0, 1 or 2 other times.
     let i = cards.indexOf(first);
     let j = -1;
     let k = -1;
@@ -609,6 +660,8 @@ var fullHouse = function(cards, result){
             k = cards.indexOf(first, j + 1);
         }
     }
+
+    //From that, we remove the best found combinaison and format the result
     if(i >= 0 && j >= 0 && k >= 0){
         cards.splice(j, 1);
         cards.splice(i, 1);
@@ -625,13 +678,19 @@ var fullHouse = function(cards, result){
         result += "2";
     }
 
-    if(cards.length > 0){
-        result = fullHouseAndLess(cards, result);
+    //Recall the function if it is still possible to find a combinaison
+    if(cards.length > 1){
+        result = fullHouse(cards, result);
     }
 
     return result;
 }
 
+/*
+Evaluates the RLE string result obtained by a call to fullHouse.
+Takes result, an RLE format string representing cards combinaisons.
+Returns an integer representing the score corresponding to that result.
+*/
 var evaluate = function(result){
     var score = 0;
     if(result == "4"){//Carre
@@ -652,18 +711,37 @@ var evaluate = function(result){
     return score;
 };
 
+/*
+Returns a copy of the give array in parameter.
+*/
 var copy = function(array){
     return array.slice();
 };
 
+/*
+Removes the empty cards from hand.
+*/
 var removeEmpty = function(hand){
-    var i = hand.indexOf(+emptyCard);
+    remove(hand, emptyCard);
+};
+
+/*
+Removes element from the given array.
+*/
+var remove = function(array, element){
+    var i = array.indexOf(+element);
     while(i >= 0){
-        hand.splice(i, 1);
-        i = hand.indexOf(+emptyCard);
+        array.splice(i, 1);
+        i = array.indexOf(+element);
     }
 };
 
+/*
+Gives the numerical values of given cards.
+Takes cards, an array of integer representing cards.
+Returns values, an array of integer representing the
+values of these cards.
+*/
 var valuesFrom = function(cards){
     var values = copy(cards);
 
@@ -673,16 +751,25 @@ var valuesFrom = function(cards){
         }
         return emptyCard;
     });
+
     return values;
 };
 
+/*
+Gives the types of given cards.
+Takes cards, an array of integer representing cards.
+Returns types, an array of integer representing the
+types of these cards.
+*/
 var typesFrom = function(cards){
+
      var types = cards.map(function(card){
         if(card != emptyCard){
             return getType(card);
         }
         return emptyCard;
     });
+
     return types;
 };
 
@@ -690,29 +777,30 @@ var typesFrom = function(cards){
 //Tests
 ///////////////////////////////////////////////////////////////////////////////
 
+//Testing a bunch of different hands
 var testHands = function(){
-    console.log(handScore([ 2, 37, 31, 44, 23 ]) == 0);  //Nothing
+    console.assert(handScore([ 2, 37, 31, 44, 23 ]) == 0);  //Nothing
 
-    console.log(handScore([ 39, 51, 43, 47, 3 ]) == 100);//Quinte Flush Royale
+    console.assert(handScore([ 39, 51, 43, 47, 3 ]) == 100);//Quinte Flush Royale
 
-    console.log(handScore([ 0, 4, 8, 12, 16 ]) == 75);   //Quinte Flush
-    console.log(handScore([ 2, 6, 14, 10, 18 ]) == 75);  //With ace at the end
+    console.assert(handScore([ 0, 4, 8, 12, 16 ]) == 75);   //Quinte Flush
+    console.assert(handScore([ 2, 6, 14, 10, 18 ]) == 75);  //With ace at the end
 
-    console.log(handScore([ 0, 2, 43, 1, 3 ]) == 50);    //Carré
+    console.assert(handScore([ 0, 2, 43, 1, 3 ]) == 50);    //Carré
 
-    console.log(handScore([ 0, 2, 43, 42, 3 ]) == 25);   //FullHouse
+    console.assert(handScore([ 0, 2, 43, 42, 3 ]) == 25);   //FullHouse
 
-    console.log(handScore([ 0, 48, 24, 28, 36 ]) == 20); //Flush
+    console.assert(handScore([ 0, 48, 24, 28, 36 ]) == 20); //Flush
 
-    console.log(handScore([ 21, 25, 17, 14, 28 ]) == 15);//Quinte
-    console.log(handScore([ 49, 3, 39, 40, 47 ]) == 15); //With ace at the end
-    console.log(handScore([ 2, 7, 13, 11, 18 ]) == 15);  //With ace at the beggining
+    console.assert(handScore([ 21, 25, 17, 14, 28 ]) == 15);//Quinte
+    console.assert(handScore([ 49, 3, 39, 40, 47 ]) == 15); //With ace at the end
+    console.assert(handScore([ 2, 7, 13, 11, 18 ]) == 15);  //With ace at the beggining
 
-    console.log(handScore([ 6, 7, 17, 5, 28 ]) == 10);   //Brelan
+    console.assert(handScore([ 6, 7, 17, 5, 28 ]) == 10);   //Brelan
 
-    console.log(handScore([ 6, 7, 17, 19, 28 ]) == 5);   //Double paire
+    console.assert(handScore([ 6, 7, 17, 19, 28 ]) == 5);   //Double paire
 
-    console.log(handScore([ 6, 7, 17, 43, 28 ]) == 2);   //Paire
+    console.assert(handScore([ 6, 7, 17, 43, 28 ]) == 2);   //Paire
 };
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -747,6 +835,8 @@ var positionMin = function (t, debut) {
 };
 
 ///////////////////////////////////////////////////////////////////////////////
+
+testHands();
 
 
 
