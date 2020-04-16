@@ -1,7 +1,7 @@
 /*
 * @Vincent Falardeau
 * @Philippe Gabriel
-* @Version 1.39.12 2020-04-22
+* @Version 1.39.13 2020-04-22
 *
 * This program aims to define an html page upon which the game of Poker
 * Shuffle, a type of solitary game, can be played following the general poker
@@ -298,15 +298,15 @@ var getCardNum = function(cardPath) {
 * The calScore function determines a given array's score based on the known
 * Poker hands and their ranking
 * The following score system will be applied during hand analysis:
-*       Combination: Quinte Flush Royale; Score: 100
-*       Combination: Quinte Flush;        Score: 75
-*       Combination: Four Of A Kind;      Score: 50
-*       Combination: Full House;          Score: 25
-*       Combination: Flush;               Score: 20
-*       Combination: Quinte;              Score: 15
-*       Combination: Three Of A Kind;     Score: 10
-*       Combination: Two Pairs;           Score: 5
-*       Combination: Pair;                Score: 2
+*       Combination: Quinte Flush Royale - Score: 100
+*       Combination: Quinte Flush        - Score: 75
+*       Combination: Four Of A Kind      - Score: 50
+*       Combination: Full House          - Score: 25
+*       Combination: Flush               - Score: 20
+*       Combination: Quinte              - Score: 15
+*       Combination: Three Of A Kind     - Score: 10
+*       Combination: Two Pairs           - Score: 5
+*       Combination: Pair                - Score: 2
 *
 * @param hand Array with cards in their integer encoding
 * @return score Integer representing the score of the hand
@@ -628,10 +628,13 @@ var scoreSystem = function() {
     tCellScore.innerHTML = tScore;
 
     if (filled) {
-        setTimeout(function() { //Wait until content is loaded before pop-up
-            alert("Votre pointage final est " + tScore);
-            init();
-        }, 1)
+        setTimeout(
+            function() { //Wait until content is loaded before pop-up
+                alert("Votre pointage final est " + tScore);
+                init();
+            }
+            ,1
+        )
     }
 };
 
