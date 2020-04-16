@@ -1,7 +1,7 @@
 /*
 * @Vincent Falardeau
 * @Philippe Gabriel
-* @Version 1.39.13 2020-04-22
+* @Version 1.39.14 2020-04-22
 *
 * This program aims to define an html page upon which the game of Poker
 * Shuffle, a type of solitary game, can be played following the general poker
@@ -385,7 +385,8 @@ var calScore = function(hand) {
 
             comb = true;
 
-        } else if (cards[0] >> 2 == 0) { //Special combination case
+        //Special combination case
+        } else if (cards[0] >> 2 == 0 && cards[cards.length - 1] >> 2 == 12) {
 
             if ((cards[cards.length - 1] >> 2) - (cards[1] >> 2) == 3) {
 
