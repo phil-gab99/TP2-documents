@@ -1,16 +1,13 @@
 /*
 * @Vincent Falardeau
 * @Philippe Gabriel
-* @Version 1.39.14 2020-04-22
+* @Version 1.39.15 2020-04-22
 *
 * This program aims to define an html page upon which the game of Poker
 * Shuffle, a type of solitary game, can be played following the general poker
 * rules concerning the ranking of hand combinations and associating a score for
 * how the main grid is filled
 **/
-
-// TODO: Play the game to find bugs if any
-// TODO: Test on Safari browser to adjust setTimeout() method if need be
 
 var mixDeck = []; //Array of randomly ordered cards in an integer encoding
 var currCard = 0; //Index indicating the next card to be flipped from pile
